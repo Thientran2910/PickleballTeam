@@ -37,55 +37,52 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
         Bỏ qua điều hướng
       </a>
       <header className="site-header">
-        <div className="container header-top">
-          <div className="logo">
-            <span className="logo-mark" aria-hidden="true">
-              PB
+        <div className="header-inner">
+          <a className="brand" href="#overview" aria-label="Pickleball Hà Nội, về trang tổng quan">
+            <span className="mark" aria-hidden="true">
+              P
             </span>
-            <span className="logo-text">
-              <span className="logo-title">Pickleball Hà Nội</span>
-              <span className="logo-sub">Quỹ và hoạt động của đội</span>
+            <span>
+              Pickleball Hà Nội
+              <small>QUỸ VÀ HOẠT ĐỘNG CỦA ĐỘI</small>
             </span>
-          </div>
-          <div className="header-actions">
-            <span className="read-at" aria-live="polite">
-              {state.readAt
-                ? `Đọc lúc ${readAtFormatter.format(state.readAt)}`
-                : 'Chưa có dữ liệu'}
-            </span>
-            <button
-              type="button"
-              className="btn"
-              onClick={onRefresh}
-              disabled={busy}
-              aria-busy={busy}
-            >
-              {label}
-            </button>
-          </div>
-        </div>
-        <nav className="site-nav" aria-label="Điều hướng chính">
-          <ul className="container">
+          </a>
+          <nav className="site-nav" aria-label="Điều hướng chính">
             {SECTIONS.map((s) => (
-              <li key={s.id}>
-                <a
-                  href={`#${s.id}`}
-                  aria-current={s.id === section ? 'page' : undefined}
-                >
-                  {s.label}
-                </a>
-              </li>
+              <a
+                key={s.id}
+                href={`#${s.id}`}
+                className={s.id === section ? 'active' : undefined}
+                aria-current={s.id === section ? 'page' : undefined}
+              >
+                {s.label}
+              </a>
             ))}
-          </ul>
-        </nav>
+          </nav>
+          <button
+            type="button"
+            className="outline refresh"
+            onClick={onRefresh}
+            disabled={busy}
+            aria-busy={busy}
+          >
+            {label}
+          </button>
+        </div>
       </header>
-      <main id="main-content" className="main container" tabIndex={-1}>
+      <main id="main-content" className="main" tabIndex={-1}>
+        <p className="read-at" aria-live="polite">
+          {state.readAt
+            ? `Đọc lúc ${readAtFormatter.format(state.readAt)}`
+            : 'Chưa có dữ liệu'}
+        </p>
         {children}
       </main>
       <footer className="site-footer">
-        <div className="container">
+        <span>Pickleball Hà Nội</span>
+        <span>
           Dữ liệu đọc từ Google Sheet của đội, chỉ xem. Nhập và sửa trên Sheet.
-        </div>
+        </span>
       </footer>
     </>
   );

@@ -1,18 +1,28 @@
 :root {
-  --bg: #f7f7f2;
-  --ink: #24372d;
-  --ink-soft: #5b6d62;
-  --brand: #315747;
-  --brand-soft: #e6eee8;
-  --line: #d9dfd6;
-  --surface: #fff;
-  --warn: #8a5a00;
-  --warn-bg: #fff6df;
-  --danger: #9b2c2c;
-  --danger-bg: #fdecec;
-  --radius: 12px;
-  --shadow: 0 1px 2px rgb(36 55 45 / 6%), 0 4px 14px rgb(36 55 45 / 5%);
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, sans-serif;
-  --font-serif: Georgia, 'Times New Roman', 'Noto Serif', serif;
+  /* Reference palette */
+  --bg: #f8f7f3;
+  --ink: #223d34;
+  --green: #2d5b4c;
+  --muted: #798179;
+  --line: #e0e3da;
+  --sage: #eaf0df;
+  --white: #fff;
+  --amber: #96651d;
+  --red: #9d5343;
+
+  /* Names used by feature stylesheets (finance, members, activities) */
+  --ink-soft: var(--muted);
+  --brand: var(--green);
+  --brand-soft: var(--sage);
+  --surface: var(--white);
+  --warn: var(--amber);
+  --warn-bg: #faf0dd;
+  --danger: var(--red);
+  --danger-bg: #f9ece6;
+  --radius: 13px;
+  --shadow: none;
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
 }
