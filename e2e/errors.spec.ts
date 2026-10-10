@@ -14,8 +14,8 @@ test.describe('first load failures never show a zero balance', () => {
       await page.goto('./#overview');
       await expect(page.getByRole('alert')).toBeVisible();
       await expect(page.getByRole('button', { name: 'Thử lại' }).first()).toBeVisible();
-      await expect(page.getByText('Số dư quỹ toàn đội')).toHaveCount(0);
-      await expect(page.getByText(/0\s*₫/)).toHaveCount(0);
+      await expect(page.getByText('Quỹ đội hiện có')).toHaveCount(0);
+      await expect(page.getByText(/0đ/)).toHaveCount(0);
     });
   }
 
@@ -23,7 +23,7 @@ test.describe('first load failures never show a zero balance', () => {
     await page.route(API_GLOB, (route) => route.abort('failed'));
     await page.goto('./#overview');
     await expect(page.getByRole('alert')).toContainText('Không kết nối được');
-    await expect(page.getByText('Số dư quỹ toàn đội')).toHaveCount(0);
+    await expect(page.getByText('Quỹ đội hiện có')).toHaveCount(0);
   });
 
   test('timeout after 20s', async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe('first load failures never show a zero balance', () => {
     await page.goto('./#overview');
     await page.clock.runFor(21_000);
     await expect(page.getByRole('alert')).toContainText('quá thời gian chờ');
-    await expect(page.getByText('Số dư quỹ toàn đội')).toHaveCount(0);
+    await expect(page.getByText('Quỹ đội hiện có')).toHaveCount(0);
   });
 });
 
@@ -45,9 +45,9 @@ test('failed refresh keeps old numbers and timestamp and marks stale', async ({ 
   );
   await page.goto('./#overview');
   const readAt = page.locator('.read-at');
-  await expect(readAt).toContainText('Đọc lúc');
+  await expect(readAt).toContainText('Cập nhật thành công');
   const before = await readAt.textContent();
-  const balance = page.getByText('Số dư quỹ toàn đội');
+  const balance = page.getByText('Quỹ đội hiện có');
   await expect(balance).toBeVisible();
 
   fail = true;
@@ -66,7 +66,7 @@ test('recovers after retry from first-load error', async ({ page }) => {
   await expect(page.getByRole('alert')).toBeVisible();
   fail = false;
   await page.getByRole('alert').getByRole('button', { name: 'Thử lại' }).click();
-  await expect(page.getByText('Số dư quỹ toàn đội')).toBeVisible();
+  await expect(page.getByText('Quỹ đội hiện có')).toBeVisible();
 });
 
 test('only GET requests reach the API', async ({ page }) => {

@@ -3,6 +3,7 @@ import { DataTable, type Column } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
 import type { PageProps, TeamData } from '../../data/schema';
 import { formatDate } from '../../lib/format';
+import { MemberDialog } from '../members/MemberDialog';
 import '../activities.css';
 import { toMatchView, type MatchView } from './adapters';
 
@@ -21,29 +22,42 @@ function winRateText(value: string | number): string {
   return displayValue(value);
 }
 
-const rankingColumns: Column<RankingRow>[] = [
-  { id: 'rank', header: 'Hạng', render: (row) => displayValue(row.rank) },
-  { id: 'member', header: 'Thành viên', render: (row) => row.member },
-  { id: 'matches', header: 'Trận', render: (row) => row.matches },
-  { id: 'wins', header: 'Thắng', render: (row) => row.wins },
-  { id: 'losses', header: 'Thua', render: (row) => row.losses },
-  { id: 'pointsFor', header: 'Điểm ghi', render: (row) => row.pointsFor },
-  {
-    id: 'pointsAgainst',
-    header: 'Điểm thua',
-    render: (row) => row.pointsAgainst,
-  },
-  {
-    id: 'difference',
-    header: 'Hiệu số',
-    render: (row) => row.pointDifference,
-  },
-  {
-    id: 'winRate',
-    header: 'Tỷ lệ thắng',
-    render: (row) => winRateText(row.winRate),
-  },
-];
+function buildRankingColumns(onOpenMember: (name: string) => void): Column<RankingRow>[] {
+  return [
+    { id: 'rank', header: 'Hạng', render: (row) => displayValue(row.rank) },
+    {
+      id: 'member',
+      header: 'Thành viên',
+      render: (row) =>
+        row.member ? (
+          <button type="button" className="link-button" onClick={() => onOpenMember(row.member)}>
+            {row.member}
+          </button>
+        ) : (
+          '—'
+        ),
+    },
+    { id: 'matches', header: 'Trận', render: (row) => row.matches },
+    { id: 'wins', header: 'Thắng', render: (row) => row.wins },
+    { id: 'losses', header: 'Thua', render: (row) => row.losses },
+    { id: 'pointsFor', header: 'Điểm ghi', render: (row) => row.pointsFor },
+    {
+      id: 'pointsAgainst',
+      header: 'Điểm thua',
+      render: (row) => row.pointsAgainst,
+    },
+    {
+      id: 'difference',
+      header: 'Hiệu số',
+      render: (row) => row.pointDifference,
+    },
+    {
+      id: 'winRate',
+      header: 'Tỷ lệ thắng',
+      render: (row) => winRateText(row.winRate),
+    },
+  ];
+}
 
 const matchColumns: Column<MatchView>[] = [
   { id: 'date', header: 'Ngày', render: (row) => formatDate(row.date) },
@@ -72,6 +86,8 @@ function integer(value: number): string {
 
 export function RankingPage({ data }: PageProps) {
   const [query, setQuery] = useState('');
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const rankingColumns = useMemo(() => buildRankingColumns(setSelectedMember), []);
 
   const { matches, invalidMatches } = useMemo(() => {
     const readable: MatchView[] = [];
@@ -190,6 +206,13 @@ export function RankingPage({ data }: PageProps) {
           description={matches.length === 0 && data.matches.length === 0 ? EMPTY_SUBTITLE : undefined}
         />
       )}
+
+      {selectedMember ? (
+        // members-page scopes the shared dialog table/footnote styles from finance.css.
+        <div className="members-page">
+          <MemberDialog data={data} name={selectedMember} onClose={() => setSelectedMember(null)} />
+        </div>
+      ) : null}
     </div>
   );
 }

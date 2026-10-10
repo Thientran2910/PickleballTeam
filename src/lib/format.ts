@@ -1,12 +1,10 @@
 const vndFormatter = new Intl.NumberFormat('vi-VN', {
-  style: 'currency',
-  currency: 'VND',
   maximumFractionDigits: 0,
 });
 
 const dateFormatter = new Intl.DateTimeFormat('vi-VN', {
-  day: '2-digit',
-  month: '2-digit',
+  day: 'numeric',
+  month: 'numeric',
   year: 'numeric',
   timeZone: 'Asia/Ho_Chi_Minh',
 });
@@ -17,7 +15,7 @@ const ratioFormatter = new Intl.NumberFormat('vi-VN', {
 });
 
 export function formatVnd(value: number): string {
-  return vndFormatter.format(value);
+  return `${vndFormatter.format(value)}đ`;
 }
 
 export function formatDate(value: string): string {

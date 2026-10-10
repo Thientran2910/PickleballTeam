@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import type { PageProps, TeamData } from '../../data/schema';
 import { formatDate, formatVnd } from '../../lib/format';
+import { MemberDialog } from '../members/MemberDialog';
 
 type Expense = TeamData['expenses'][number];
 
-const MAX_MONTHS = 6;
-const MAX_MISSING = 6;
+const MAX_MONTHS = 8;
 const MAX_CATEGORIES = 6;
 const MAX_RECENT = 5;
 
@@ -18,9 +19,12 @@ function monthLabel(key: string): string {
   return `${month}/${year}`;
 }
 
+function shortMonthLabel(key: string): string {
+  return `${key.slice(5)}/${key.slice(2, 4)}`;
+}
+
 function compactVnd(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}tr`;
-  return `${Math.round(value / 1000)}k`;
+  return `${(value / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}tr`;
 }
 
 function monthlyExpenses(expenses: Expense[]) {
@@ -60,12 +64,8 @@ function recentExpenses(expenses: Expense[]) {
 function MonthlyChart({ months }: { months: { key: string; total: number }[] }) {
   const width = 600;
   const height = 220;
-  const top = 24;
-  const bottom = 28;
-  const max = Math.max(...months.map((m) => m.total), 0);
-  const slot = width / months.length;
-  const barWidth = Math.min(56, slot * 0.55);
-  const plotHeight = height - top - bottom;
+  const max = Math.max(...months.map((m) => m.total), 1);
+  const step = 530 / months.length;
   const summary = months
     .map((m) => `${monthLabel(m.key)}: ${formatVnd(m.total)}`)
     .join('; ');
@@ -76,21 +76,21 @@ function MonthlyChart({ months }: { months: { key: string; total: number }[] }) 
       role="img"
       aria-label={`Chi phí ghi nhận theo tháng. ${summary}`}
     >
-      <line x1="0" x2={width} y1={height - bottom} y2={height - bottom} stroke="#e0e3da" />
+      <line x1="45" y1="180" x2="585" y2="180" stroke="#dfe3d7" />
       {months.map((m, i) => {
-        const barHeight = max > 0 ? (m.total / max) * plotHeight : 0;
-        const x = i * slot + (slot - barWidth) / 2;
-        const y = height - bottom - barHeight;
+        const barHeight = (m.total / max) * 140;
+        const x = 45 + i * step + step * 0.16;
+        const mid = x + step * 0.27;
         return (
           <g key={m.key}>
-            <rect x={x} y={y} width={barWidth} height={barHeight} rx="4" fill="#c09c69">
+            <rect x={x} y={180 - barHeight} width={step * 0.55} height={barHeight} rx="5" fill="#749177">
               <title>{`${monthLabel(m.key)}: ${formatVnd(m.total)}`}</title>
             </rect>
-            <text x={x + barWidth / 2} y={y - 6} textAnchor="middle">
+            <text x={mid} y={170 - barHeight} textAnchor="middle">
               {compactVnd(m.total)}
             </text>
-            <text x={x + barWidth / 2} y={height - 10} textAnchor="middle">
-              {monthLabel(m.key)}
+            <text x={mid} y="202" textAnchor="middle">
+              {shortMonthLabel(m.key)}
             </text>
           </g>
         );
@@ -100,46 +100,56 @@ function MonthlyChart({ months }: { months: { key: string; total: number }[] }) 
 }
 
 export function OverviewPage({ data }: PageProps) {
+  const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const o = data.overview;
   const months = monthlyExpenses(data.expenses);
   const categories = categoryTotals(data.expenses);
-  const categoryMax = Math.max(...categories.map((c) => c.total), 0);
+  const categoryMax = Math.max(...categories.map((c) => c.total), 1);
   const recent = recentExpenses(data.expenses);
-  const missing = data.income
-    .filter((row) => row.period === o.fundPeriod && row.missing > 0)
-    .sort((a, b) => b.missing - a.missing);
+  const missing = data.income.filter(
+    (row) => row.period === o.fundPeriod && row.missing > 0,
+  );
   const progress =
     o.periodRequired > 0
       ? Math.min(100, Math.max(0, (o.periodPaid / o.periodRequired) * 100))
       : 0;
 
   return (
-    <div className="page">
+    <div className="page overview-page">
       <section className="hero" aria-labelledby="ov-title">
         <div>
           <h2 className="eyebrow" id="ov-eyebrow">
-            Tổng quan
+            <span aria-hidden="true">01 / CÙNG CHƠI · CÙNG TIẾN BỘ</span>
+            <span className="sr-only">Tổng quan</span>
           </h2>
           <h1 id="ov-title">
-            Quỹ và hoạt động của <em>đội Pickleball</em>
+            Một đội chơi.
+            <br />
+            <em>Mọi con số rõ ràng.</em>
           </h1>
-          <p>Số liệu toàn đội lấy nguyên từ tab Tổng quan của Sheet.</p>
+          <p>
+            Quỹ đội, lịch chơi và thành tích — cùng nhìn lại những buổi ra sân, cùng chuẩn bị
+            cho những trận tiếp theo.
+          </p>
           <div className="hero-actions">
             <a className="solid" href="#finance">
-              Xem quỹ đội
+              Xem quỹ đội ↗
             </a>
             <a className="outline" href="#ranking">
-              Xem bảng xếp hạng
+              Thành tích thi đấu →
             </a>
           </div>
         </div>
 
         <div className="hero-card" aria-labelledby="ov-balance">
-          <p className="eyebrow" id="ov-balance">
-            Số dư quỹ toàn đội
-          </p>
-          <p className="big">{formatVnd(o.balance)}</p>
-          <p className="muted">Không đổi theo bộ lọc</p>
+          <div className="row">
+            <span className="eyebrow" id="ov-balance">
+              Quỹ đội hiện có
+            </span>
+            <span className="tag">{o.fundPeriod}</span>
+          </div>
+          <div className="big">{formatVnd(o.balance)}</div>
+          <p>Tiến độ đóng quỹ đợt {o.fundPeriod}</p>
           <div
             className="progress"
             role="progressbar"
@@ -150,156 +160,149 @@ export function OverviewPage({ data }: PageProps) {
           >
             <i style={{ width: `${progress}%` }} />
           </div>
-          <p className="eyebrow">Đóng quỹ kỳ {o.fundPeriod}</p>
           <div className="row">
-            <span>Cần đóng</span>
-            <strong>{formatVnd(o.periodRequired)}</strong>
-          </div>
-          <div className="row">
-            <span>Đã đóng</span>
-            <strong>{formatVnd(o.periodPaid)}</strong>
-          </div>
-          <div className="row">
-            <span>Còn thiếu</span>
-            <strong>{formatVnd(o.periodMissing)}</strong>
-          </div>
-          <div className="row">
-            <span>Thành viên đã đóng đủ</span>
-            <strong>{`${o.fullyPaidMembers}/${o.regularMembers}`}</strong>
+            <span>
+              {formatVnd(o.periodPaid)} / {formatVnd(o.periodRequired)}
+            </span>
+            <strong>{Math.round(progress)}%</strong>
           </div>
         </div>
       </section>
 
       <section className="stats" aria-label="Thu chi toàn đội">
         <div className="stat">
-          <span className="stat-title">Tổng thu</span>
           <span className="money">{formatVnd(o.totalIncome)}</span>
+          <small>Tổng thu quỹ từ khi theo dõi</small>
         </div>
         <div className="stat">
-          <span className="stat-title">Chi trực tiếp từ quỹ</span>
           <span className="money">{formatVnd(o.totalFundOutflow)}</span>
-          <small>Chưa gồm khoản hoàn ứng</small>
+          <small>Tổng tiền đã chi từ quỹ</small>
         </div>
         <div className="stat">
-          <span className="stat-title">Đã hoàn ứng</span>
-          <span className="money">{formatVnd(o.totalRefunded)}</span>
-          <small>Tính riêng</small>
+          <span className="money">{o.regularMembers.toLocaleString('vi-VN')}</span>
+          <small>Thành viên thường trực</small>
         </div>
         <div className="stat">
-          <span className="stat-title">Chi phí ghi nhận</span>
-          <span className="money">{formatVnd(o.totalExpenses)}</span>
+          <span className="money">{`${o.fullyPaidMembers}/${o.regularMembers}`}</span>
+          <small>Đã đóng đủ đợt hiện tại</small>
         </div>
       </section>
 
+      <div className="section-head">
+        <div>
+          <h2>Bức tranh của đội</h2>
+          <p>Thu–chi và tiến độ quỹ, cập nhật từ sổ chung.</p>
+        </div>
+        <a className="outline" href="#finance">
+          Chi tiết thu–chi →
+        </a>
+      </div>
+
       <div className="grid2">
-        <section className="panel" aria-labelledby="ov-monthly">
-          <h3 id="ov-monthly">Chi phí ghi nhận theo tháng</h3>
-          {months.length === 0 ? (
-            <p className="muted">Chưa có khoản chi phí có ngày hợp lệ.</p>
-          ) : (
-            <>
+        <div>
+          <section className="panel" aria-labelledby="ov-monthly">
+            <div className="eyebrow">Chi phí theo tháng</div>
+            <h3 id="ov-monthly" style={{ marginTop: 12 }}>
+              Mỗi buổi chơi, một phần đóng góp.
+            </h3>
+            {months.length === 0 ? (
+              <p className="muted">Chưa có khoản chi phí có ngày hợp lệ.</p>
+            ) : (
               <MonthlyChart months={months} />
-              <div className="legend">
-                <span>
-                  <i className="dot" aria-hidden="true" />
-                  Chi phí ghi nhận
-                </span>
-              </div>
-            </>
-          )}
-        </section>
+            )}
+            <div className="footnote">
+              Chi phí ghi nhận · gồm chi từ quỹ và các khoản ứng cá nhân.
+            </div>
+          </section>
 
-        <section className="panel" aria-labelledby="ov-recent">
-          <div className="row">
-            <h3 id="ov-recent">Chi phí gần đây</h3>
-            <a className="link-button" href="#finance">
-              Xem quỹ đội
-            </a>
-          </div>
-          {recent.length === 0 ? (
-            <p className="muted">Chưa có khoản chi phí nào.</p>
-          ) : (
-            <ul className="activity-list">
-              {recent.map((e) => (
-                <li className="activity" key={e.id}>
-                  <div className="row">
-                    <span>{e.category.trim() || 'Chưa phân loại'}</span>
-                    <strong className="amount-negative">
-                      {formatVnd(e.recordedExpense)}
-                    </strong>
-                  </div>
-                  <small>
-                    {formatDate(e.date)}
-                    {e.paidBy ? ` · ${e.paidBy}` : ''}
-                  </small>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+          <section className="panel" aria-labelledby="ov-recent">
+            <div className="row">
+              <h3 id="ov-recent">Giao dịch chi gần đây</h3>
+              <a href="#finance">Xem tất cả →</a>
+            </div>
+            {recent.length === 0 ? (
+              <p className="muted">Chưa có khoản chi phí nào.</p>
+            ) : (
+              <ul className="activity-list">
+                {recent.map((e) => (
+                  <li className="activity row" key={e.id}>
+                    <div>
+                      {e.category.trim() || 'Chưa phân loại'}
+                      <small>
+                        {formatDate(e.date)} · {e.paidBy || 'Chưa ghi người trả'}
+                      </small>
+                    </div>
+                    <strong>{formatVnd(e.recordedExpense)}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
 
-      <div className="grid2">
-        <section className="panel" aria-labelledby="ov-missing">
-          <div className="row">
-            <h3 id="ov-missing">Còn thiếu kỳ {o.fundPeriod}</h3>
-            <a className="link-button" href="#finance">
-              Xem thu quỹ
-            </a>
-          </div>
-          {missing.length === 0 ? (
-            <p className="muted">
-              Không có khoản còn thiếu nào trong dữ liệu thu quỹ kỳ {o.fundPeriod}.
-            </p>
-          ) : (
-            <ul className="activity-list">
-              {missing.slice(0, MAX_MISSING).map((row) => (
-                <li className="activity" key={`${row.period}-${row.member}`}>
-                  <div className="row">
-                    <span>{row.member}</span>
+        <div>
+          <section className="panel dark" aria-labelledby="ov-period">
+            <div className="eyebrow">Đợt {o.fundPeriod}</div>
+            <h3 id="ov-period" style={{ marginTop: 14 }}>
+              Cùng hoàn thành quỹ đội.
+            </h3>
+            <div className="big metric">{formatVnd(o.periodMissing)}</div>
+            <p className="muted">{missing.length} người còn thiếu trong đợt hiện tại.</p>
+          </section>
+
+          <section className="panel" aria-labelledby="ov-missing">
+            <h3 id="ov-missing">Tiến độ đóng quỹ</h3>
+            {missing.length === 0 ? (
+              <p className="muted">Mọi người đã hoàn thành đợt quỹ này.</p>
+            ) : (
+              <ul className="activity-list">
+                {missing.map((row) => (
+                  <li className="activity row" key={`${row.period}-${row.member}`}>
                     <span>
-                      <strong className="amount-negative">
-                        {formatVnd(row.missing)}
-                      </strong>{' '}
-                      <span className="tag warn">{row.status}</span>
+                      <button
+                        type="button"
+                        className="link-button"
+                        onClick={() => setSelectedMember(row.member)}
+                      >
+                        {row.member}
+                      </button>
                     </span>
-                  </div>
-                </li>
-              ))}
-              {missing.length > MAX_MISSING ? (
-                <li className="activity muted">
-                  và {missing.length - MAX_MISSING} thành viên khác
-                </li>
-              ) : null}
-            </ul>
-          )}
-        </section>
+                    <strong className="amount-negative">{formatVnd(row.missing)}</strong>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
-        <section className="panel" aria-labelledby="ov-categories">
-          <h3 id="ov-categories">Chi phí theo hạng mục</h3>
-          {categories.length === 0 ? (
-            <p className="muted">Chưa có khoản chi phí nào.</p>
-          ) : (
-            <ul className="bars">
-              {categories.map((c) => (
-                <li className="bar-row" key={c.name}>
-                  <div className="row">
-                    <span>{c.name}</span>
-                    <strong>{formatVnd(c.total)}</strong>
-                  </div>
-                  <div className="bar-track" aria-hidden="true">
-                    <i
-                      style={{
-                        width: `${categoryMax > 0 ? (c.total / categoryMax) * 100 : 0}%`,
-                      }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+          <section className="panel" aria-labelledby="ov-categories">
+            <h3 id="ov-categories">Quỹ được dùng vào đâu?</h3>
+            {categories.length === 0 ? (
+              <p className="muted">Chưa có khoản chi phí nào.</p>
+            ) : (
+              <ul className="bars">
+                {categories.map((c) => (
+                  <li className="bar-row" key={c.name}>
+                    <div className="row">
+                      <span>{c.name}</span>
+                      <strong>{formatVnd(c.total)}</strong>
+                    </div>
+                    <div className="bar-track" aria-hidden="true">
+                      <i style={{ width: `${(c.total / categoryMax) * 100}%` }} />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
       </div>
+
+      {selectedMember ? (
+        // members-page scopes the shared dialog table/footnote styles from finance.css.
+        <div className="members-page">
+          <MemberDialog data={data} name={selectedMember} onClose={() => setSelectedMember(null)} />
+        </div>
+      ) : null}
     </div>
   );
 }

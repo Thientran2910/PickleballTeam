@@ -95,4 +95,12 @@ describe('RankingPage', () => {
     render(<RankingPage data={makeTeamData({ matches: [] })} />);
     expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument();
   });
+
+  it('opens the member profile from a ranking row', () => {
+    const data = makeTeamData();
+    data.ranking = [{ ...data.ranking[0], member: 'An Thử Nghiệm', rank: '1', matches: 3 }];
+    render(<RankingPage data={data} />);
+    fireEvent.click(screen.getByRole('button', { name: 'An Thử Nghiệm' }));
+    expect(screen.getByText('HỒ SƠ THÀNH VIÊN')).toBeInTheDocument();
+  });
 });
