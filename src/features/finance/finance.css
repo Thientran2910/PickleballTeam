@@ -1,51 +1,100 @@
-.section-heading {
+/* Page chrome shared by Finance and Members, mirroring the reference stylesheet. */
+:is(.finance-page, .members-page) .page-title h1 {
+  letter-spacing: -1.8px;
+  margin: 20px 0 12px;
+}
+:is(.finance-page, .members-page) .page-title h1 em { color: var(--green); }
+
+:is(.finance-page, .members-page) .filters {
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
 }
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-  gap: 0.85rem;
-  padding: 1rem;
+:is(.finance-page, .members-page) input,
+:is(.finance-page, .members-page) select {
   border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-.filter-grid label {
-  display: grid;
-  gap: 0.35rem;
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.filter-grid input,
-.filter-grid select {
-  width: 100%;
-  min-height: 2.6rem;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
+  background: var(--white);
   color: var(--ink);
-  font: inherit;
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 130px;
+}
+:is(.finance-page, .members-page) input {
+  flex: 1;
+  min-width: 180px;
+  max-width: 380px;
+}
+
+:is(.finance-page, .members-page) .footnote {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 15px 0;
+}
+
+.finance-page .switcher { display: flex; gap: 8px; flex-wrap: wrap; }
+.finance-page .switcher button {
+  border: 1px solid var(--line);
+  background: var(--white);
+  border-radius: 6px;
+  padding: 7px 15px;
+  color: var(--muted);
+}
+.finance-page .switcher button.selected {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+:is(.finance-page, .members-page) .table-wrap {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--white);
+}
+:is(.finance-page, .members-page) .table-wrap table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  text-align: left;
+}
+:is(.finance-page, .members-page) .table-wrap th {
+  background: #f0f2eb;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 650;
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+:is(.finance-page, .members-page) .table-wrap td {
+  border-top: 1px solid #edf0e8;
+  padding: 14px 16px;
+  white-space: nowrap;
+}
+:is(.finance-page, .members-page) .table-wrap tbody tr:hover { background: #fafbf7; }
+
+:is(.finance-page, .members-page) .empty {
+  padding: 50px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+:is(.finance-page, .members-page) .empty strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 25px;
   font-weight: 400;
+  color: var(--ink);
+  margin-bottom: 8px;
 }
 
-.finance-totals {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-}
-
-@media (max-width: 480px) {
-  .finance-page .block {
-    gap: 0.75rem;
+@media (max-width: 700px) {
+  :is(.finance-page, .members-page) .page-title h1 {
+    letter-spacing: -1px;
   }
-
-  .filter-grid {
-    padding: 0.85rem;
-  }
+  :is(.finance-page, .members-page) .filters input { max-width: none; }
+  :is(.finance-page, .members-page) .filters select { flex: 1; }
+  :is(.finance-page, .members-page) .table-wrap th,
+  :is(.finance-page, .members-page) .table-wrap td { padding: 12px; }
 }

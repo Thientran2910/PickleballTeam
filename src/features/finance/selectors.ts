@@ -103,3 +103,133 @@ export function summarizeExpenses(rows: ExpenseRow[]) {
     },
   );
 }
+
+type AdvanceRow = TeamData['advances'][number];
+type RefundRow = TeamData['refunds'][number];
+
+export type FinanceTab = 'income' | 'expenses' | 'advances' | 'refunds';
+
+export type RefundView = {
+  date: string;
+  member: string;
+  expenseId: string;
+  amount: number | null;
+  method: string;
+  raw: RefundRow;
+};
+
+function normalizeQuery(query: string): string {
+  return query.trim().toLocaleLowerCase('vi-VN');
+}
+
+function matchesQuery(values: unknown[], query: string): boolean {
+  const needle = normalizeQuery(query);
+  if (!needle) return true;
+  const haystack = values
+    .filter((value) => typeof value === 'string' || typeof value === 'number')
+    .join(' ')
+    .toLocaleLowerCase('vi-VN');
+  return haystack.includes(needle);
+}
+
+/** `YYYY-MM` of a Vietnam-time calendar day, or null when the date is unknown. */
+export function monthKey(value: string): string | null {
+  return vietnamDayKey(value)?.slice(0, 7) ?? null;
+}
+
+/** Month keys that occur in dated rows, newest first. */
+export function listMonths(dates: string[]): string[] {
+  const months = new Set<string>();
+  for (const date of dates) {
+    const key = monthKey(date);
+    if (key) months.add(key);
+  }
+  return [...months].sort().reverse();
+}
+
+export function searchIncome(
+  rows: IncomeRow[],
+  filter: { period: string; query: string },
+): IncomeRow[] {
+  return rows.filter(
+    (row) =>
+      (!filter.period || row.period === filter.period) &&
+      matchesQuery(Object.values(row), filter.query),
+  );
+}
+
+/** Newest expense first; rows without a readable date keep source order at the end. */
+export function searchExpenses(
+  rows: ExpenseRow[],
+  filter: { month: string; query: string },
+): ExpenseRow[] {
+  return rows
+    .filter(
+      (row) =>
+        (!filter.month || monthKey(row.date) === filter.month) &&
+        matchesQuery(Object.values(row), filter.query),
+    )
+    .map((row, index) => ({ row, index, day: vietnamDayKey(row.date) ?? '' }))
+    .sort((a, b) =>
+      a.day === b.day ? a.index - b.index : a.day < b.day ? 1 : -1,
+    )
+    .map((entry) => entry.row);
+}
+
+export function searchAdvances(rows: AdvanceRow[], query: string): AdvanceRow[] {
+  return rows.filter((row) => matchesQuery(Object.values(row), query));
+}
+
+export function sumAdvanceRemaining(rows: AdvanceRow[]): number {
+  return rows.reduce((total, row) => total + row.remaining, 0);
+}
+
+function readText(value: unknown): string {
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return '';
+}
+
+function readAmount(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+/** Refund rows are not schema-verified upstream; unknown fields stay unknown. */
+export function readRefund(row: RefundRow): RefundView {
+  return {
+    date: readText(row.date),
+    member: readText(row.member),
+    expenseId: readText(row.expenseId),
+    amount: readAmount(row.amount),
+    method: readText(row.method),
+    raw: row,
+  };
+}
+
+export function searchRefunds(
+  rows: RefundRow[],
+  filter: { month: string; query: string },
+): RefundView[] {
+  return rows
+    .map(readRefund)
+    .filter(
+      (view) =>
+        (!filter.month || monthKey(view.date) === filter.month) &&
+        matchesQuery(Object.values(view.raw), filter.query),
+    );
+}
+
+export function summarizeRefunds(views: RefundView[]) {
+  return views.reduce(
+    (sum, view) =>
+      view.amount === null
+        ? { ...sum, unknown: sum.unknown + 1 }
+        : { ...sum, amount: sum.amount + view.amount },
+    { amount: 0, unknown: 0 },
+  );
+}
