@@ -23,9 +23,9 @@ No public deploy or source writes authorized in this coding phase.
 |---|---|---|
 | T1 | merged, verified | 8dfa2b5; 22 tests, typecheck, lint, build passed; worker released |
 | T2 | merged, verified | 27 tests, typecheck, lint, build passed; worker released; visual check deferred to integration |
-| T3 | running | ctx_8b94ae0001d5; pb-t3-finance; effective gpt-5.6-sol high |
-| T4 | running; source contract verified | ctx_2fafb2b2b779; pb-t4-activities; effective gpt-5.6-sol high |
-| T5 | pending | |
+| T3 | merged, verified | 8066eff; 39 integration tests, typecheck, lint, build passed; worker released |
+| T4 | merged, verified | 588b000; 60 integration tests, typecheck, lint, build passed; worker released |
+| T5 | launching | Claude claude-sonnet-5-5; all dependencies merged |
 
 Run: run_2b6c493a528c; coordinator term_8446dd00-64e5-4b7d-8e96-040520ac1258.
 
@@ -40,3 +40,5 @@ Coordinator browser QA of T2: localhost real API loaded successfully in Chrome. 
 Read-only reconciliation: Chrome overview and TỔNG QUAN!B5:H9 via Drive connector matched all displayed metrics (balance, income, direct outflow, refunded, expenses, regular members, required, paid, missing and fully paid count where applicable) on 2026-10-10 around 09:48 Asia/Ho_Chi_Minh. No live amounts or member rows persisted in fixtures.
 
 Release reference checked: https://vite.dev/guide/static-deploy.html#github-pages on 2026-10-10 shows checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 (full SHA pins in official example). T5 should use current verified actions rather than older memorized majors.
+
+T5 copy polish: replace user-facing references to API/field implementation in FinancePage and MembersPage intros with practical Sheet/team wording, retaining the accounting distinctions.
