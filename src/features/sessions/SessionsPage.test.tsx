@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { makeTeamData } from '../../test/fixtures';
 import { SessionsPage } from './SessionsPage';
@@ -22,7 +22,7 @@ const session = (overrides: Record<string, unknown> = {}) => ({
 describe('SessionsPage', () => {
   it('shows an empty calendar without invented sessions', () => {
     render(<SessionsPage data={makeTeamData({ sessions: [] })} />);
-    expect(screen.getByText('Chưa có dữ liệu lịch chơi')).toBeInTheDocument();
+    expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument();
   });
 
   it('sorts readable sessions newest first without mutating the snapshot', () => {
@@ -37,32 +37,47 @@ describe('SessionsPage', () => {
     expect(rows[0]).toHaveTextContent('Buổi mới');
     expect(rows[1]).toHaveTextContent('Buổi chơi thử nghiệm');
     expect(data.sessions).toEqual(sessions);
-    expect(screen.getAllByText('18:30–20:30')).toHaveLength(2);
+    expect(screen.getAllByText('18:30 – 20:30')).toHaveLength(2);
   });
 
   it('reports unreadable records instead of calling them empty data', () => {
     render(<SessionsPage data={makeTeamData({ sessions: [{ id: '' }] })} />);
     expect(screen.getByText(/1 bản ghi lịch chơi không đọc được/)).toBeInTheDocument();
-    expect(screen.queryByText('Chưa có dữ liệu lịch chơi')).not.toBeInTheDocument();
+    expect(screen.queryByText('Chưa có dữ liệu')).not.toBeInTheDocument();
   });
 
-  it('filters by date and status and distinguishes no matching results', () => {
+  it('summarises sessions without treating unknown counts as zero', () => {
     render(
       <SessionsPage
         data={makeTeamData({
           sessions: [
             session(),
-            session({ id: 'SES-TEST-002', date: '2026-10-10', status: 'Đã hủy' }),
+            session({ id: 'SES-TEST-002', date: '2026-10-10', memberCount: '', guests: '' }),
           ],
         })}
       />,
     );
+    expect(screen.getByText('Lượt thành viên tham gia · 1 buổi chưa ghi')).toBeInTheDocument();
+    expect(screen.getByText('Lượt khách tham gia · 1 buổi chưa ghi')).toBeInTheDocument();
+    const cells = within(screen.getByRole('table')).getAllByRole('row')[1];
+    expect(cells).toHaveTextContent('—');
+  });
 
-    fireEvent.change(screen.getByLabelText('Ngày chơi'), {
-      target: { value: '2026-10-08' },
-    });
-    expect(screen.getByText('Không có kết quả phù hợp')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
-    expect(screen.getAllByText('Buổi chơi thử nghiệm')).toHaveLength(2);
+  it('shows courts and guests next to the other source columns', () => {
+    render(<SessionsPage data={makeTeamData({ sessions: [session()] })} />);
+    const headers = within(screen.getByRole('table'))
+      .getAllByRole('columnheader')
+      .map((cell) => cell.textContent);
+    expect(headers).toEqual([
+      'Ngày',
+      'Hoạt động',
+      'Sân',
+      'Giờ',
+      'Số sân',
+      'Thành viên',
+      'Khách',
+      'Chi phí',
+      'Trạng thái',
+    ]);
   });
 });
