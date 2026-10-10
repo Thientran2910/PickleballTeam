@@ -110,4 +110,15 @@ describe('fetchTeamData', () => {
 
     await expect(request).rejects.toMatchObject({ name: 'AbortError' });
   });
+
+  it('turns a native fetch TypeError into a Vietnamese network error', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
+    );
+
+    await expect(fetchTeamData()).rejects.toThrow(
+      'Không kết nối được tới nguồn dữ liệu',
+    );
+  });
 });

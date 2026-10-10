@@ -50,7 +50,7 @@ export function MembersPage({ data }: PageProps) {
     <div className="page members-page">
       <header className="page-head">
         <h2>Thành viên</h2>
-        <p>Tài chính và thành tích của từng thành viên theo số liệu API.</p>
+        <p>Tình hình đóng quỹ và thành tích của từng thành viên theo Sheet của đội.</p>
       </header>
 
       <section className="block" aria-labelledby="members-list-title">

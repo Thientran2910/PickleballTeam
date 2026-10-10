@@ -108,7 +108,7 @@ export function FinancePage({ data }: PageProps) {
     <div className="page finance-page">
       <header className="page-head">
         <h2>Quỹ đội</h2>
-        <p>Thu, chi và ứng hoàn ứng được giữ đúng theo từng trường của API.</p>
+        <p>Thu, chi và ứng/hoàn ứng theo sổ quỹ trên Sheet; các khoản được tách riêng, không cộng trùng.</p>
       </header>
 
       <section className="block" aria-labelledby="finance-income-title">
