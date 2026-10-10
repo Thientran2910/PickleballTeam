@@ -182,6 +182,8 @@ describe('OverviewPage', () => {
         session('PAST', '2026-10-09T00:00:00+07:00'),
         session('LATE', '2026-10-20T00:00:00+07:00'),
         session('TODAY', '2026-10-10T00:00:00+07:00'),
+        // Ended at 06:00 Vietnam time, before "now" (06:30), so it is no longer upcoming.
+        { ...session('DONE', '2026-10-10T00:00:00+07:00', '05:00'), end: '06:00' },
         session('EARLY', '2026-10-15T00:00:00+07:00', '18:00'),
         session('NIGHT', '2026-10-15T00:00:00+07:00', '20:00'),
         { id: 'BROKEN', date: 'không rõ' },
@@ -209,6 +211,18 @@ describe('OverviewPage', () => {
         'href',
         '#sessions',
       );
+    });
+
+    it('sits in the hero right above the fund balance card', () => {
+      const data = makeTeamData();
+      render(<OverviewPage data={data} />);
+      const upcoming = screen.getByRole('heading', { name: 'Lịch thi đấu sắp tới' });
+      const balance = screen.getByText('Quỹ đội hiện có');
+      const hero = upcoming.closest('.hero') as HTMLElement;
+      expect(hero).toContainElement(balance);
+      expect(
+        upcoming.compareDocumentPosition(balance) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
     });
 
     it('shows empty copy when nothing is scheduled ahead', () => {
