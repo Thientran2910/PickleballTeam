@@ -1,0 +1,18 @@
+:root {
+  --bg: #f7f7f2;
+  --ink: #24372d;
+  --ink-soft: #5b6d62;
+  --brand: #315747;
+  --brand-soft: #e6eee8;
+  --line: #d9dfd6;
+  --surface: #fff;
+  --warn: #8a5a00;
+  --warn-bg: #fff6df;
+  --danger: #9b2c2c;
+  --danger-bg: #fdecec;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgb(36 55 45 / 6%), 0 4px 14px rgb(36 55 45 / 5%);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', 'Noto Serif', serif;
+}
