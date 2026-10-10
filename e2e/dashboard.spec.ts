@@ -46,7 +46,7 @@ test('changing filters does not refetch; Cập nhật does', async ({ page }) =>
   const api = await mockApi(page);
   await page.goto('./#finance');
   await expect(page.getByRole('heading', { level: 2, name: 'Quỹ đội' })).toBeVisible();
-  await page.getByLabel('Trạng thái đóng').selectOption({ index: 1 });
+  await page.getByLabel('Lọc đợt quỹ').selectOption({ index: 1 });
   expect(api.count()).toBe(1);
   await page.getByRole('button', { name: 'Cập nhật' }).click();
   await expect.poll(() => api.count()).toBe(2);
