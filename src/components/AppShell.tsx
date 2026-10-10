@@ -25,7 +25,15 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
 
   return (
     <>
-      <a className="skip-link" href="#main-content">
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={(event) => {
+          // Giữ nguyên hash của mục đang mở; chỉ chuyển focus vào nội dung.
+          event.preventDefault();
+          document.getElementById('main-content')?.focus();
+        }}
+      >
         Bỏ qua điều hướng
       </a>
       <header className="site-header">

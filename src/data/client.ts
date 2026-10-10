@@ -2,6 +2,7 @@ import { API_TIMEOUT_MS, API_URL } from '../config';
 import { parseTeamPayload, type TeamData } from './schema';
 
 const LOAD_ERROR = 'Không tải được dữ liệu. Vui lòng thử lại.';
+const NETWORK_ERROR = 'Không kết nối được tới nguồn dữ liệu. Vui lòng kiểm tra mạng và thử lại.';
 const TIMEOUT_ERROR = 'Yêu cầu quá thời gian chờ. Vui lòng thử lại.';
 const INVALID_DATA_ERROR = 'Dữ liệu nhận được không hợp lệ. Vui lòng thử lại.';
 
@@ -49,6 +50,9 @@ export async function fetchTeamData(signal?: AbortSignal): Promise<TeamData> {
   } catch (error) {
     if (timedOut) {
       throw new Error(TIMEOUT_ERROR, { cause: error });
+    }
+    if (error instanceof TypeError && !controller.signal.aborted) {
+      throw new Error(NETWORK_ERROR, { cause: error });
     }
     throw error;
   } finally {
