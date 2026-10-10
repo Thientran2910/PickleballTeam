@@ -187,14 +187,14 @@ Trong các mẫu lệnh vận hành, HANDLE/branch là giá trị runtime đư�
 
 **Interfaces:** Produces TeamData, PageProps, fetchTeamData, TeamDataProvider, useTeamData theo chữ ký ở trên; formatVnd(value: number): string, formatDate(value: string): string, formatRatio(value: number): string. `src/test/fixtures.ts` export `makeTeamData(overrides?: Partial<TeamData>): TeamData` dùng tên và số liệu tổng hợp hoàn toàn giả; `makePayload(overrides?: Partial<TeamData>)` bọc `{ok:true,data:makeTeamData(overrides)}`.
 
-- [ ] **Step 1: Scaffold mà không xóa docs đã có.** Tạo Vite react-ts ở thư mục tạm bằng `npm create vite@latest` rồi copy các file scaffold cần thiết vào root; không chấp nhận tùy chọn xóa nội dung workspace. Hoặc dựng các file tương đương thủ công. Chọn Node 24 cho .nvmrc; giữ package-lock.
+- [x] **Step 1: Scaffold mà không xóa docs đã có.** Tạo Vite react-ts ở thư mục tạm bằng `npm create vite@latest` rồi copy các file scaffold cần thiết vào root; không chấp nhận tùy chọn xóa nội dung workspace. Hoặc dựng các file tương đương thủ công. Chọn Node 24 cho .nvmrc; giữ package-lock.
 
 ```sh
 npm install react react-dom zod
 npm install -D vite @vitejs/plugin-react typescript @types/react @types/react-dom @types/node eslint @eslint/js typescript-eslint eslint-plugin-react-hooks eslint-plugin-react-refresh globals vitest jsdom @testing-library/react @testing-library/jest-dom
 ```
 
-- [ ] **Step 2: Thiết lập config và test environment.** Vite dùng base từ `VITE_BASE_PATH || '/'`; Vitest jsdom/setup, exclude e2e. `index.html` có lang=vi, viewport, title Pickleball Hà Nội, meta robots noindex từ đầu.
+- [x] **Step 2: Thiết lập config và test environment.** Vite dùng base từ `VITE_BASE_PATH || '/'`; Vitest jsdom/setup, exclude e2e. `index.html` có lang=vi, viewport, title Pickleball Hà Nội, meta robots noindex từ đầu.
 
 ```ts
 // vite.config.ts
@@ -215,7 +215,7 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 Import đầy đủ `defineConfig`, `react`, `afterEach`, `vi`, `cleanup` tại file tương ứng; không dựa vào global Vitest nếu chưa cấu hình types.
 
-- [ ] **Step 3: Viết boundary tests trước parser/client.** Fixture mặc định có các object/mảng đầy đủ; số tổng hợp 0 là dữ liệu fixture hợp lệ, không phải fallback production. Các tên như An/Bình và mã kỳ test là dữ liệu tự dựng.
+- [x] **Step 3: Viết boundary tests trước parser/client.** Fixture mặc định có các object/mảng đầy đủ; số tổng hợp 0 là dữ liệu fixture hợp lệ, không phải fallback production. Các tên như An/Bình và mã kỳ test là dữ liệu tự dựng.
 
 ```ts
 it('rejects malformed money instead of rendering zero', () => {
@@ -245,7 +245,7 @@ it('uses only public simple GET', async () => {
 
 Run `npm test -- src/data/schema.test.ts src/data/client.test.ts`; expected FAIL trước khi có implementation. Thêm case HTTP 500, HTML response, JSON thiếu overview, schemaVersion không hỗ trợ và timeout.
 
-- [ ] **Step 4: Ghi hợp đồng đã quan sát, rồi implement Zod schema.** Liệt kê từng field từ spec/bản GET read-only; nhận finite number cho tiền/thống kê, string cho date/name/status, number|string cho rank/winRate/quantity nơi dữ liệu thật có chuỗi. Không dùng `z.coerce.number()` cho ô rỗng. Unknown extra object keys được bỏ qua; missing required arrays/overview là lỗi, không default []/0.
+- [x] **Step 4: Ghi hợp đồng đã quan sát, rồi implement Zod schema.** Liệt kê từng field từ spec/bản GET read-only; nhận finite number cho tiền/thống kê, string cho date/name/status, number|string cho rank/winRate/quantity nơi dữ liệu thật có chuỗi. Không dùng `z.coerce.number()` cho ô rỗng. Unknown extra object keys được bỏ qua; missing required arrays/overview là lỗi, không default []/0.
 
 ```ts
 const finite = z.number().finite();
@@ -267,7 +267,7 @@ export function parseTeamPayload(input: unknown): TeamData {
 
 `docs/api-contract.md` phải có đầy đủ field/type các mảng đã có bản ghi, schemaVersion=1, timestamps/timezone, các trường thiếu so với Sheet, và đánh dấu rõ ba mảng chưa có mẫu. Không copy toàn bộ payload thật vào docs hoặc fixture.
 
-- [ ] **Step 5: Client giữ URL /exec và theo redirect.** API URL từ `import.meta.env.VITE_APPS_SCRIPT_URL` hoặc constant URL công khai trong spec. Timeout 20 giây; gọi simple GET, credentials omit, redirect follow, không custom headers và không JSONP/no-cors. Phân loại abort do unmount với timeout; kiểm tra HTTP status rồi parse JSON/schema.
+- [x] **Step 5: Client giữ URL /exec và theo redirect.** API URL từ `import.meta.env.VITE_APPS_SCRIPT_URL` hoặc constant URL công khai trong spec. Timeout 20 giây; gọi simple GET, credentials omit, redirect follow, không custom headers và không JSONP/no-cors. Phân loại abort do unmount với timeout; kiểm tra HTTP status rồi parse JSON/schema.
 
 ```ts
 const response = await fetch(API_URL, {
@@ -280,11 +280,11 @@ return parseTeamPayload(await response.json());
 
 requestSignal phối hợp caller signal và timeout controller, clear timer trong finally; không hardcode URL googleusercontent redirect và không log payload.
 
-- [ ] **Step 6: Data provider một snapshot.** Tải khi mount, refresh nút chung; chống request chồng khi đang tải; abort cleanup. Refresh lỗi giữ data/readAt cũ và chuyển stale. Một context chung được main.tsx bọc ngoài App; feature không mount provider lại khi đổi tab. Lỗi lần đầu data=null; không lấy fallback 0.
+- [x] **Step 6: Data provider một snapshot.** Tải khi mount, refresh nút chung; chống request chồng khi đang tải; abort cleanup. Refresh lỗi giữ data/readAt cũ và chuyển stale. Một context chung được main.tsx bọc ngoài App; feature không mount provider lại khi đổi tab. Lỗi lần đầu data=null; không lấy fallback 0.
 
 Test bằng renderHook/render với mocked client: lần đầu fail là error/null; refresh fail giữ cùng snapshot/readAt; refresh thành công đổi readAt; unmount không ghi state sau request. Dùng deferred promise và fake timers, không sleep thật.
 
-- [ ] **Step 7: Format helpers và kiểm chứng.** `formatDate('')` trả '—'; ISO +07 không bị lệch ngày; invalid date trả '—'. formatRatio chỉ nhận tỷ lệ số đã xác minh, chuỗi '—' được view giữ nguyên. Money không cắt số âm hoặc precision bằng parseInt.
+- [x] **Step 7: Format helpers và kiểm chứng.** `formatDate('')` trả '—'; ISO +07 không bị lệch ngày; invalid date trả '—'. formatRatio chỉ nhận tỷ lệ số đã xác minh, chuỗi '—' được view giữ nguyên. Money không cắt số âm hoặc precision bằng parseInt.
 
 ```ts
 expect(formatDate('')).toBe('—');
@@ -296,7 +296,7 @@ expect(formatVnd(-100000)).toContain('-');
 
 Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`; expected all pass, dist/index.html có noindex và bundle không chứa fixture.
 
-- [ ] **Step 8: Commit trong task execution:** stage đúng file ownership, `git commit -m "feat: add typed read-only data foundation"`. Báo commit hash, checks, schema chưa xác minh. Không push/deploy.
+- [x] **Step 8: Commit trong task execution:** stage đúng file ownership, `git commit -m "feat: add typed read-only data foundation"`. Báo commit hash, checks, schema chưa xác minh. Không push/deploy.
 
 ---
 
@@ -331,7 +331,7 @@ export type DataTableProps<Row> = { caption: string; rows: Row[];
 // OverviewPage: PageProps, không fetch.
 ```
 
-- [ ] **Step 1: Bắt đầu từ tokens và shell responsive.** Tạo header/logo chữ, 6 anchor hash, nút Cập nhật, main và footer. Nền #f7f7f2, xanh #315747, text #24372d, border #d9dfd6; system sans, heading serif. Header sticky chỉ khi không che nội dung; mobile nav wrap hoặc cuộn riêng. Focus visible, aria-current, skip link.
+- [x] **Step 1: Bắt đầu từ tokens và shell responsive.** Tạo header/logo chữ, 6 anchor hash, nút Cập nhật, main và footer. Nền #f7f7f2, xanh #315747, text #24372d, border #d9dfd6; system sans, heading serif. Header sticky chỉ khi không che nội dung; mobile nav wrap hoặc cuộn riêng. Focus visible, aria-current, skip link.
 
 ```css
 :root { --bg: #f7f7f2; --ink: #24372d; --brand: #315747;
@@ -343,7 +343,7 @@ body { margin: 0; background: var(--bg); color: var(--ink); }
 :focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; }
 ```
 
-- [ ] **Step 2: Test rồi implement hash navigation.** useSection đọc hash ban đầu, subscribe hashchange, cleanup; unknown/empty trả overview. Link là anchor thật, giữ browser history. Tại task này các trang ngoài overview có panel thông báo tích hợp ở T5 trong App.tsx; không tạo fake data hoặc file placeholder ở thư mục worker khác.
+- [x] **Step 2: Test rồi implement hash navigation.** useSection đọc hash ban đầu, subscribe hashchange, cleanup; unknown/empty trả overview. Link là anchor thật, giữ browser history. Tại task này các trang ngoài overview có panel thông báo tích hợp ở T5 trong App.tsx; không tạo fake data hoặc file placeholder ở thư mục worker khác.
 
 ```ts
 it('supports direct finance hash and browser hash changes', () => {
@@ -360,7 +360,7 @@ it('supports direct finance hash and browser hash changes', () => {
 
 Thêm unknown hash → overview. Run `npm test -- src/navigation/useSection.test.tsx` fail rồi pass.
 
-- [ ] **Step 3: Shared table và load states.** DataTable dùng table/caption/thead/tbody, cells qua render ReactNode; EmptyState tách mảng rỗng với lỗi; LoadState cho first loading/error/stale. App chỉ render feature khi state.data khác null; refresh và stale vẫn giữ feature cũ. Nút Cập nhật disable/aria-busy trong loading/refreshing.
+- [x] **Step 3: Shared table và load states.** DataTable dùng table/caption/thead/tbody, cells qua render ReactNode; EmptyState tách mảng rỗng với lỗi; LoadState cho first loading/error/stale. App chỉ render feature khi state.data khác null; refresh và stale vẫn giữ feature cũ. Nút Cập nhật disable/aria-busy trong loading/refreshing.
 
 ```tsx
 <div className="table-scroll" role="region" aria-label={caption} tabIndex={0}>
@@ -373,7 +373,7 @@ Thêm unknown hash → overview. Run `npm test -- src/navigation/useSection.test
 </div>
 ```
 
-- [ ] **Step 4: Tổng quan dùng trực tiếp overview.** Thẻ số dư toàn đội, totalIncome, totalFundOutflow, totalExpenses; khu riêng fundPeriod/periodRequired/periodPaid/periodMissing/fullyPaidMembers. Không cộng income/expenses để thay số overview.
+- [x] **Step 4: Tổng quan dùng trực tiếp overview.** Thẻ số dư toàn đội, totalIncome, totalFundOutflow, totalExpenses; khu riêng fundPeriod/periodRequired/periodPaid/periodMissing/fullyPaidMembers. Không cộng income/expenses để thay số overview.
 
 ```ts
 it('renders upstream balance separately from period payments', () => {
@@ -387,7 +387,7 @@ it('renders upstream balance separately from period payments', () => {
 });
 ```
 
-- [ ] **Step 5: Kiểm chứng và commit.** Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`. Xem browser local ở 390px và desktop: header/tab/focus/bảng không tràn ngang toàn trang. Commit `feat: add responsive dashboard shell and overview`; báo shared component interfaces cho T3/T4.
+- [x] **Step 5: Kiểm chứng và commit.** Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`. Xem browser local ở 390px và desktop: header/tab/focus/bảng không tràn ngang toàn trang. Commit `feat: add responsive dashboard shell and overview`; báo shared component interfaces cho T3/T4.
 
 ---
 
@@ -421,7 +421,7 @@ export function summarizeExpenses(rows: ExpenseRow[]): { amount: number; recorde
 export function selectMembers(rows: TeamData['members'], query: string, status: string): TeamData['members'];
 ```
 
-- [ ] **Step 1: Viết selector tests cho các trường hợp có thể sai tiền.** Dùng makeTeamData và literal override bản ghi tổng hợp trong test, không copy dữ liệu thật.
+- [x] **Step 1: Viết selector tests cho các trường hợp có thể sai tiền.** Dùng makeTeamData và literal override bản ghi tổng hợp trong test, không copy dữ liệu thật.
 
 ```ts
 it('does not offset missing dues with overpayment from another row', () => {
@@ -443,7 +443,7 @@ it('keeps expense recognition separate from fund outflow and refund', () => {
 
 `makeTeamData` phải có ít nhất một synthetic income/expense row để làm base; arrays sessions/matches/refunds vẫn empty. Thêm case kỳ LS-* lọc bằng equality, receivedAt rỗng vẫn giữ dòng thu, khoảng ngày inclusive theo Asia/Ho_Chi_Minh, ngày không hợp lệ không giả thành hôm nay. Run `npm test -- src/features/finance/selectors.test.ts` fail trước implement.
 
-- [ ] **Step 2: Implement selectors không mutate data.** Filters rỗng là tất cả; period bắt đầu bằng overview.fundPeriod, option lịch sử lấy unique period thực tế. Các tổng cộng từng field API, không dựng missing bằng phép trừ. Chi không có period nên không được dùng kỳ thu để lọc.
+- [x] **Step 2: Implement selectors không mutate data.** Filters rỗng là tất cả; period bắt đầu bằng overview.fundPeriod, option lịch sử lấy unique period thực tế. Các tổng cộng từng field API, không dựng missing bằng phép trừ. Chi không có period nên không được dùng kỳ thu để lọc.
 
 ```ts
 export function summarizeIncome(rows: IncomeRow[]) {
@@ -457,7 +457,7 @@ export function summarizeIncome(rows: IncomeRow[]) {
 
 Date input YYYY-MM-DD so sánh với day key trong timezone Việt Nam được lấy từ Date/Intl, không so sánh chuỗi dd/mm hoặc parse theo locale máy.
 
-- [ ] **Step 3: FinancePage có 3 vùng rõ.** Thu quỹ: kỳ/người/trạng thái, totals theo lọc, bảng required/paid/missing/status/receivedAt/method. Chi quỹ: ngày/nhóm/người thanh toán, bảng date/category/amount/paidBy/source; nhãn tiền chi phí và tiền ra khỏi quỹ tách biệt. Ứng/hoàn ứng: dùng advances member/advanced/refunded/remaining/status. Không thêm cột Nội dung/Chứng từ hoặc bảng lịch sử refunds chưa xác minh.
+- [x] **Step 3: FinancePage có 3 vùng rõ.** Thu quỹ: kỳ/người/trạng thái, totals theo lọc, bảng required/paid/missing/status/receivedAt/method. Chi quỹ: ngày/nhóm/người thanh toán, bảng date/category/amount/paidBy/source; nhãn tiền chi phí và tiền ra khỏi quỹ tách biệt. Ứng/hoàn ứng: dùng advances member/advanced/refunded/remaining/status. Không thêm cột Nội dung/Chứng từ hoặc bảng lịch sử refunds chưa xác minh.
 
 ```tsx
 const [period, setPeriod] = useState(data.overview.fundPeriod);
@@ -469,7 +469,7 @@ const totals = summarizeIncome(rows);
 
 Component test chọn kỳ lịch sử, kiểm tra visible row và sum; kiểm tra không hiện cột không có dữ liệu API. Empty do filter có nút Xóa bộ lọc; empty nguồn dùng Chưa có dữ liệu.
 
-- [ ] **Step 4: MembersPage giữ số liệu API.** Tìm tên không phân biệt hoa/thường, lọc status; bảng tài chính từng người và thống kê số buổi/số trận/thắng/thua. Không recompute missing từ required-paid; người matches=0 hiển thị Chưa thi đấu/dấu gạch ở tỷ lệ phù hợp. Định dạng tỷ lệ số theo công thức Sheet; không parse chuỗi dấu gạch thành 0.
+- [x] **Step 4: MembersPage giữ số liệu API.** Tìm tên không phân biệt hoa/thường, lọc status; bảng tài chính từng người và thống kê số buổi/số trận/thắng/thua. Không recompute missing từ required-paid; người matches=0 hiển thị Chưa thi đấu/dấu gạch ở tỷ lệ phù hợp. Định dạng tỷ lệ số theo công thức Sheet; không parse chuỗi dấu gạch thành 0.
 
 ```ts
 it('shows reported missing amount rather than recomputing it', () => {
@@ -481,7 +481,7 @@ it('shows reported missing amount rather than recomputing it', () => {
 });
 ```
 
-- [ ] **Step 5: Kiểm chứng/commit.** Run `npm run typecheck`, `npm run lint`, `npm test -- src/features/finance src/features/members`, `npm run build`. Kiểm tra component bằng fixtures không cần App routing. Commit `feat: add finance and member views`; báo file exports để T5 tích hợp. Không sửa file ngoài ownership.
+- [x] **Step 5: Kiểm chứng/commit.** Run `npm run typecheck`, `npm run lint`, `npm test -- src/features/finance src/features/members`, `npm run build`. Kiểm tra component bằng fixtures không cần App routing. Commit `feat: add finance and member views`; báo file exports để T5 tích hợp. Không sửa file ngoài ownership.
 
 ---
 
@@ -515,11 +515,11 @@ export function toMatchView(row: Record<string, unknown>): { ok: true; value: Ma
 
 View types là interface frontend đã chọn; KHÔNG tuyên bố đó là tên khóa upstream. Adapter map chính xác từ khóa JSON đã được contract gate xác minh. Trường API thực sự không cung cấp là null/dấu gạch, không suy luận hoặc đọc Sheet trực tiếp.
 
-- [ ] **Step 1: Contract gate read-only trước adapter có dữ liệu.** Đọc mã xuất JSON của Apps Script hiện có nếu user/connector/browser đã có quyền; hoặc quan sát bản GET có dữ liệu tự nhiên. Endpoint GET đang empty không đủ. Cột Sheet chỉ hỗ trợ hiểu ý nghĩa, không chứng minh JSON key.
+- [x] **Step 1: Contract gate read-only trước adapter có dữ liệu.** Đọc mã xuất JSON của Apps Script hiện có nếu user/connector/browser đã có quyền; hoặc quan sát bản GET có dữ liệu tự nhiên. Endpoint GET đang empty không đủ. Cột Sheet chỉ hỗ trợ hiểu ý nghĩa, không chứng minh JSON key.
 
 Ghi tên khóa, kiểu, ví dụ synthetic thay tên/giá trị thật, nguồn bằng chứng và cách xử lý ô rỗng vào docs/api-contract.md. Không POST, không chèn dữ liệu, không sửa script. Nếu không đọc được mã và API vẫn rỗng, báo coordinator để xin user đoạn export JSON liên quan; vẫn làm ranking/assets/empty states nhưng không mark task complete hoặc claim support nonempty sessions/matches. Không chọn khóa phỏng đoán để vượt gate.
 
-- [ ] **Step 2: Tests rỗng, chưa thi đấu và quantity string.** Những case sau dùng contract đã có, có thể làm ngay trong khi chờ gate:
+- [x] **Step 2: Tests rỗng, chưa thi đấu và quantity string.** Những case sau dùng contract đã có, có thể làm ngay trong khi chờ gate:
 
 ```ts
 it('shows an empty calendar without invented sessions', () => {
@@ -543,13 +543,13 @@ it('preserves unknown asset quantities instead of converting them to zero', () =
 
 Run `npm test -- src/features/ranking src/features/sessions src/features/assets` fail trước implementation. Test fixtures không dùng API thật.
 
-- [ ] **Step 3: RankingPage theo thứ tự upstream.** Bảng rank/member/matches/wins/losses/pointsFor/pointsAgainst/pointDifference/winRate; member chưa chơi có dấu gạch/Chưa thi đấu, không top-3 highlight. Không reorder bằng metric tự chọn. Hiển thị lịch sử trận bằng adapter đã xác minh; không suy ra kết quả từ tổng thắng/thua.
+- [x] **Step 3: RankingPage theo thứ tự upstream.** Bảng rank/member/matches/wins/losses/pointsFor/pointsAgainst/pointDifference/winRate; member chưa chơi có dấu gạch/Chưa thi đấu, không top-3 highlight. Không reorder bằng metric tự chọn. Hiển thị lịch sử trận bằng adapter đã xác minh; không suy ra kết quả từ tổng thắng/thua.
 
-- [ ] **Step 4: SessionsPage và adapters sau gate.** Danh sách ngày, sân, giờ, người hoặc số người nếu API chỉ cho số lượng, totalCost/status. Lọc ngày/trạng thái nếu field có trong contract; date Việt Nam; sắp ngày mới nhất, không mutating snapshot. Không có raw field thì bỏ nhãn dữ liệu đó hoặc dấu gạch có nghĩa; không tạo lịch mặc định.
+- [x] **Step 4: SessionsPage và adapters sau gate.** Danh sách ngày, sân, giờ, người hoặc số người nếu API chỉ cho số lượng, totalCost/status. Lọc ngày/trạng thái nếu field có trong contract; date Việt Nam; sắp ngày mới nhất, không mutating snapshot. Không có raw field thì bỏ nhãn dữ liệu đó hoặc dấu gạch có nghĩa; không tạo lịch mặc định.
 
 Viết thêm test adapter dùng một synthetic record có đúng khóa từ contract đọc được: map giờ/ngày/chi phí đúng, record thiếu required field trả `{ok:false}`. Component báo số bản ghi không đọc được; không coi toàn mảng lỗi là Chưa có dữ liệu.
 
-- [ ] **Step 5: AssetsPage.** Bảng quantity strings giữ nguyên, giá trị tiền dùng finite number đã validate, ngày rỗng dấu gạch, người giữ/status giữ nguyên text. Tìm tên và lọc tình trạng lấy unique status trong dữ liệu. Không tự tính lại số còn lại hoặc thêm giao dịch tồn kho.
+- [x] **Step 5: AssetsPage.** Bảng quantity strings giữ nguyên, giá trị tiền dùng finite number đã validate, ngày rỗng dấu gạch, người giữ/status giữ nguyên text. Tìm tên và lọc tình trạng lấy unique status trong dữ liệu. Không tự tính lại số còn lại hoặc thêm giao dịch tồn kho.
 
 ```tsx
 // quantity đã là dữ liệu hiển thị upstream, giữ chuỗi số hoặc dấu gạch.
@@ -557,7 +557,7 @@ const quantityText = (value: string | number) =>
   typeof value === 'string' && value.trim() === '' ? '—' : String(value);
 ```
 
-- [ ] **Step 6: Kiểm chứng/commit.** Run `npm run typecheck`, `npm run lint`, `npm test -- src/features/ranking src/features/sessions src/features/assets`, `npm run build`. Task chỉ hoàn tất khi contract gate + case nonempty đã chứng minh hoặc user chính thức điều chỉnh phạm vi. Commit `feat: add ranking schedule and asset views`; báo exports, contract evidence và checks. Không sửa ngoài ownership.
+- [x] **Step 6: Kiểm chứng/commit.** Run `npm run typecheck`, `npm run lint`, `npm test -- src/features/ranking src/features/sessions src/features/assets`, `npm run build`. Task chỉ hoàn tất khi contract gate + case nonempty đã chứng minh hoặc user chính thức điều chỉnh phạm vi. Commit `feat: add ranking schedule and asset views`; báo exports, contract evidence và checks. Không sửa ngoài ownership.
 
 ---
 
@@ -576,7 +576,7 @@ const quantityText = (value: string | number) =>
 
 **Interfaces:** Consumes toàn bộ named pages, TeamDataProvider/useTeamData, Section, synthetic fixtures. Produces bản build tĩnh, workflow CI/Pages chưa publish, tài liệu vận hành và báo cáo chứng cứ.
 
-- [ ] **Step 1: Tích hợp đủ 6 route, không thêm fetch theo page.** App route map typed và chỉ render data khác null. Giữ data provider tại main, không key provider theo section. Loại mọi panel tích hợp tạm trong T2.
+- [x] **Step 1: Tích hợp đủ 6 route, không thêm fetch theo page.** App route map typed và chỉ render data khác null. Giữ data provider tại main, không key provider theo section. Loại mọi panel tích hợp tạm trong T2.
 
 ```tsx
 const pages: Record<Section, ComponentType<PageProps>> = {
@@ -590,7 +590,7 @@ return <AppShell section={section} state={state} onRefresh={state.refresh}>
 </AppShell>;
 ```
 
-- [ ] **Step 2: Playwright kiểm tra production build tại subpath.** Cài dev dependency và browser Chromium. Test command build với `VITE_BASE_PATH=/PickleballTeam/`, preview 127.0.0.1:4173 strict port. CI chỉ Chromium cho phạm vi nhỏ; kiểm tra mobile bằng viewport và desktop.
+- [x] **Step 2: Playwright kiểm tra production build tại subpath.** Cài dev dependency và browser Chromium. Test command build với `VITE_BASE_PATH=/PickleballTeam/`, preview 127.0.0.1:4173 strict port. CI chỉ Chromium cho phạm vi nhỏ; kiểm tra mobile bằng viewport và desktop.
 
 ```sh
 npm install -D @playwright/test
@@ -614,7 +614,7 @@ test('opens and reloads finance under the Pages project path', async ({ page }) 
 
 Thêm tests: 6 link routes, Back/Forward, không refetch do đổi tab/filter, click refresh có request mới; API HTTP lỗi/HTML/ok=false/timeout không hiện balance 0; refresh lỗi giữ số/timestamp cũ và hiện stale; HTML build có noindex; malicious text từ Sheet hiển thị nguyên text không chạy HTML; mobile 390px document.scrollWidth <= innerWidth.
 
-- [ ] **Step 3: CI và deploy config không chứa tên tài khoản hardcoded.** CI chạy npm ci/typecheck/lint/test/build/E2E Node24; lockfile committed. Pages workflow manual `workflow_dispatch` ban đầu, không tự publish khi chỉ push code chuẩn bị. Đặt permissions contents:read, pages:write, id-token:write; GitHub environment github-pages, concurrency pages. Dùng actions/configure-pages/upload-pages-artifact/deploy-pages theo official Vite example, chọn current stable major được official docs xác nhận lúc implement.
+- [x] **Step 3: CI và deploy config không chứa tên tài khoản hardcoded.** CI chạy npm ci/typecheck/lint/test/build/E2E Node24; lockfile committed. Pages workflow manual `workflow_dispatch` ban đầu, không tự publish khi chỉ push code chuẩn bị. Đặt permissions contents:read, pages:write, id-token:write; GitHub environment github-pages, concurrency pages. Dùng actions/configure-pages/upload-pages-artifact/deploy-pages theo official Vite example, chọn current stable major được official docs xác nhận lúc implement.
 
 Base path tính từ repo GitHub thực tế, không hardcode /PickleballTeam/ khi repository khác tên:
 
@@ -631,15 +631,15 @@ npm run build
 
 T5 dùng code này trong build workflow, không chạy push/dispatch/enable Pages. API public URL có thể dùng default config; không yêu cầu secret hoặc token frontend.
 
-- [ ] **Step 4: Kiểm chứng live read-only và đối soát.** Chạy browser với API thật ở local preview để phát hiện CORS/redirect/schema. Đọc Sheet bằng connector tại cùng thời điểm để đối chiếu overview: balance, totalIncome, totalFundOutflow, totalRefunded, totalExpenses, periodRequired/Paid/Missing. Nếu lệch do nguồn thay đổi, đọc lại một lần theo cùng snapshot; không sửa số nguồn/ghi đè frontend để ép khớp.
+- [x] **Step 4: Kiểm chứng live read-only và đối soát.** Chạy browser với API thật ở local preview để phát hiện CORS/redirect/schema. Đọc Sheet bằng connector tại cùng thời điểm để đối chiếu overview: balance, totalIncome, totalFundOutflow, totalRefunded, totalExpenses, periodRequired/Paid/Missing. Nếu lệch do nguồn thay đổi, đọc lại một lần theo cùng snapshot; không sửa số nguồn/ghi đè frontend để ép khớp.
 
 Kiểm tra tổng qua fixtures là test tự động; số live không hardcode vào assertion CI. Ghi thời điểm, field đối chiếu, pass/fail và các giới hạn còn lại vào docs/verification.md, không dump payload thật. Quota/lỗi mạng live không được làm mất suite deterministic đã pass; vẫn báo rõ live check chưa pass nếu xảy ra.
 
-- [ ] **Step 5: Tài liệu và kết quả để user review.** README có Node/npm scripts, public URL API, thao tác cập nhật Sheet rồi Cập nhật web, giải thích noindex không phải đăng nhập, xử lý lỗi nguồn, cách deploy/rollback phiên bản website. Không hứa backup Sheet tự động: không thay Apps Script/Sheet trong phạm vi này.
+- [x] **Step 5: Tài liệu và kết quả để user review.** README có Node/npm scripts, public URL API, thao tác cập nhật Sheet rồi Cập nhật web, giải thích noindex không phải đăng nhập, xử lý lỗi nguồn, cách deploy/rollback phiên bản website. Không hứa backup Sheet tự động: không thay Apps Script/Sheet trong phạm vi này.
 
 Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e`. Xem browser production build desktop/mobile và chụp màn hình 6 mục/trạng thái lỗi cần thiết vào artifact local ngoài repo. Kiểm tra `dist/index.html` có noindex, bundle không import src/test/fixtures, repo không chứa env private hoặc snapshot thật.
 
-- [ ] **Step 6: Commit và bàn giao.** Commit `feat: integrate dashboard and prepare GitHub Pages release`. Báo commit hash, checks, đường dẫn preview/screenshots, các gate chưa hoàn tất. Không coi Task5 đạt nếu T4 chưa xác minh lịch/trận mà chưa có quyết định thay đổi phạm vi của user.
+- [x] **Step 6: Commit và bàn giao.** Commit `feat: integrate dashboard and prepare GitHub Pages release`. Báo commit hash, checks, đường dẫn preview/screenshots, các gate chưa hoàn tất. Không coi Task5 đạt nếu T4 chưa xác minh lịch/trận mà chưa có quyết định thay đổi phạm vi của user.
 
 ## Triển khai public — bước sau plan, khi user yêu cầu
 
@@ -670,3 +670,7 @@ Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run t
 ## Cập nhật cách dispatch ngày 10/10/2026
 
 CLI Orca hiện hỗ trợ `orchestration worker-start --worktree new-child --name ... --base-branch feat/pickleball-dashboard --agent ... --model ...`. Dùng đường dispatch được Orca quản lý này thay mẫu launcher mặc định để giữ đúng model user chỉ định. Mỗi task vẫn một worktree riêng; theo dõi lifecycle và merge về integration. Đã smoke-test cả `gpt-5.6-sol` và `claude-sonnet-5-5`; không bật fallback model.
+
+## Kết quả coding ngày 10/10/2026
+
+T1–T5 và lượt sửa cuối đã merge vào `feat/pickleball-dashboard`. Coordinator kiểm chứng lại 68 unit tests, 17 E2E, typecheck, lint và build sau merge cuối: pass. Nghiệm thu local hoàn tất; publish là bước sau plan. Xem [báo cáo kết quả](../../implementation-progress.md).

@@ -1,6 +1,6 @@
 # Đặc tả website Pickleball Hà Nội
 
-Trạng thái: user đã duyệt đặc tả và cho phép coding ngày 10/10/2026; đang thực hiện theo plan. Tiến độ và bằng chứng mới tại [implementation-progress.md](../../implementation-progress.md).
+Trạng thái: user đã duyệt đặc tả và cho phép coding ngày 10/10/2026; coding đã hoàn tất và nghiệm thu local; chưa publish. Tiến độ và bằng chứng mới tại [implementation-progress.md](../../implementation-progress.md).
 
 ## Mục tiêu và các quyết định đã duyệt
 

@@ -1,44 +1,40 @@
 # Implementation progress — Pickleball dashboard
 
-Plan: docs/superpowers/plans/2026-10-10-pickleball-dashboard.md
-Spec: docs/superpowers/specs/2026-10-10-pickleball-dashboard.md
+Status: coding complete and locally verified, 2026-10-10. Branch: `feat/pickleball-dashboard`.
 
-## Authorization
+Plan: [implementation plan](superpowers/plans/2026-10-10-pickleball-dashboard.md). Spec: [approved scope](superpowers/specs/2026-10-10-pickleball-dashboard.md).
 
-User approved scope, mixed Executors, and requested coding on 2026-10-10.
-T1/T3/T4: Codex gpt-5.6-sol high. T2/T5: Claude claude-sonnet-5-5.
-No public deploy or source writes authorized in this coding phase.
+## Authorization and execution
 
-## Preflight
+User approved coding, mixed Executors and these models: Codex `gpt-5.6-sol` high for T1/T3/T4; Claude `claude-sonnet-5-5` for T2/T5. Both models were smoke-tested and their effective Orca launch settings verified; no model fallback. Each dispatch used a separate Orca worktree and was merged into the integration branch. No remote source changes or publication were performed.
 
-- Models: both explicit IDs returned MODEL_OK; no fallback.
-- Orca ready; workspace initially had only approved spec/plan and no Git.
-- T1 -> T2 -> (T3,T4) -> T5. Shared interfaces checked against plan.
-- Ruling: use Orca supervised worker-start new-child with explicit --model rather than launcher-default worktree create; maintains requested worktree separation and model selection.
-- Ruling: plan helpers/fixtures are contract examples, not mandatory verbatim implementation; behavior and spec are binding. Do not guess nonempty session/match schema.
+| Task | Executor/model | Outcome | Evidence |
+|---|---|---|---|
+| T1 — typed data, client, snapshot provider | Codex 5.6 SOL high | Complete, merged | 8dfa2b5; 22 tests, typecheck/lint/build passed |
+| T2 — responsive shell, navigation, overview | Claude Sonnet 5.5 | Complete, merged | f687365; 27 integration tests; visual checks completed in T5 |
+| T3 — finance and members | Codex 5.6 SOL high | Complete, merged | 8066eff; 39 integration tests, typecheck/lint/build passed |
+| T4 — ranking, sessions, assets | Codex 5.6 SOL high | Complete, merged | 588b000; verified source keys; 60 integration tests |
+| T5 — integration, browser tests, release configuration | Claude Sonnet 5.5 | Complete, merged | b31803c; 68 unit and 17 E2E tests |
+| T5 final review follow-up | Claude Sonnet 5.5 | Complete, merged | 20c75b0; session label and handover corrections; scoped checks passed |
 
-## Tasks
+Run: `run_2b6c493a528c`. All six settled worker terminals released and archived; no reclaimable terminals remain. Git branches/worktree files retained.
 
-| Task | State | Evidence |
-|---|---|---|
-| T1 | merged, verified | 8dfa2b5; 22 tests, typecheck, lint, build passed; worker released |
-| T2 | merged, verified | 27 tests, typecheck, lint, build passed; worker released; visual check deferred to integration |
-| T3 | merged, verified | 8066eff; 39 integration tests, typecheck, lint, build passed; worker released |
-| T4 | merged, verified | 588b000; 60 integration tests, typecheck, lint, build passed; worker released |
-| T5 | launching | Claude claude-sonnet-5-5; all dependencies merged |
+## Final verification
 
-Run: run_2b6c493a528c; coordinator term_8446dd00-64e5-4b7d-8e96-040520ac1258.
+- Coordinator reran typecheck, lint, all 68 unit tests, and all 17 Chromium E2E tests after the final merge: passed. E2E builds and previews `/PickleballTeam/` with synthetic fixtures; includes mobile 390px, hash/history/reload, GET-only behavior, error/timeout/stale/retry, escaped hostile text and original HTML noindex.
+- Production dependency audit: `npm audit --omit=dev --audit-level=high` reported 0 vulnerabilities. T5 adds development browser-test tooling only.
+- Root production preview: http://127.0.0.1:4174/PickleballTeam/#overview . Coordinator Chrome check around 10:04 Asia/Ho_Chi_Minh loaded the real API successfully with no console warnings/errors.
+- T5 also checked all six pages with the real API at desktop 1280px/mobile 390px, with no page overflow or refetch from hash changes. Screenshots outside Git: `/tmp/pickleball-artifacts/`.
+- Coordinator read-only reconciliation around 09:48: Chrome overview matched `TỔNG QUAN!B5:H9` read through Drive connector for all displayed overview metrics. No live financial snapshots committed as fixtures.
+- Source contract gate fulfilled by reading Dashboard.gs and exercising nonempty synthetic session/match fixtures with verified JSON keys; see [source evidence](api-source-evidence.md). No records were created in the live Sheet.
+- Local checks used Node 26.10.0; `.nvmrc` and CI select Node 24. Hosted CI has not run because the repository has not been published.
 
-Contract gate: read Dashboard.gs from linked project via browser; verified sessions/matches/refunds mappings and serialization. Evidence in docs/api-source-evidence.md; T1 notified via Orca.
+## Review corrections resolved
 
-Integration review: T5 must normalize native fetch TypeError into a Vietnamese network error while preserving caller abort behavior, with a regression test.
+Network fetch TypeError now produces a Vietnamese message while caller abort is preserved. Keyboard skip link focuses main without changing the active route. Navigation is centered with the content. User-facing API implementation wording was removed. Session attendance is labeled Thành viên because memberCount excludes guests. README contains direct source links and accurate rollback instructions.
 
-T5 review: skip link currently changes hash to an unknown section and may reset active route; verify keyboard skip behavior and fix if confirmed. Shared T2 interfaces match the plan; StatCard additionally accepts primary?: boolean.
+## Publication boundary
 
-Coordinator browser QA of T2: localhost real API loaded successfully in Chrome. Keyboard skip link confirmed to reset #finance to overview; T5 must preserve the current route while focusing main. Desktop nav is left-aligned because .site-nav ul margin:0 overrides .container auto margins; T5 should align it with header/main. Temporary responsive viewport restored; exact 390px validation remains with Playwright.
+Coding and local acceptance are complete. GitHub repository creation/push/Pages publication remain a later user-requested step. Pages workflow is manual only; actual GitHub Pages-origin CORS and public URL checks remain pending until publication. Sessions/matches currently have no nonempty live records, so live record verification remains unavailable even though the source contract gate is satisfied. Sheet, Apps Script and sharing permissions were not modified.
 
-Read-only reconciliation: Chrome overview and TỔNG QUAN!B5:H9 via Drive connector matched all displayed metrics (balance, income, direct outflow, refunded, expenses, regular members, required, paid, missing and fully paid count where applicable) on 2026-10-10 around 09:48 Asia/Ho_Chi_Minh. No live amounts or member rows persisted in fixtures.
-
-Release reference checked: https://vite.dev/guide/static-deploy.html#github-pages on 2026-10-10 shows checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 (full SHA pins in official example). T5 should use current verified actions rather than older memorized majors.
-
-T5 copy polish: replace user-facing references to API/field implementation in FinancePage and MembersPage intros with practical Sheet/team wording, retaining the accounting distinctions.
+Release Actions majors checked against [official Vite guidance](https://vite.dev/guide/static-deploy.html#github-pages) on 2026-10-10. Detailed verification: [verification.md](verification.md).
