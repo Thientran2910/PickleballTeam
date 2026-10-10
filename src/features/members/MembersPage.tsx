@@ -22,7 +22,9 @@ export function MembersPage({ data }: PageProps) {
   return (
     <div className="page members-page">
       <div className="page-title">
-        <div className="eyebrow">TEAM ATLAS · 03 / THÀNH VIÊN</div>
+        <h2 className="eyebrow">
+          <span aria-hidden="true">TEAM ATLAS · 03 / </span>Thành viên
+        </h2>
         <h1>Những người cùng đội.</h1>
         <p className="muted">Mỗi thành viên, một hồ sơ đóng góp và thành tích.</p>
       </div>

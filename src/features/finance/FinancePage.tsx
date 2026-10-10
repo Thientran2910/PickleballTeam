@@ -186,7 +186,9 @@ export function FinancePage({ data }: PageProps) {
   return (
     <div className="page finance-page">
       <div className="page-title">
-        <div className="eyebrow">TEAM ATLAS · 02 / QUỸ ĐỘI</div>
+        <h2 className="eyebrow">
+          <span aria-hidden="true">TEAM ATLAS · 02 / </span>Quỹ đội
+        </h2>
         <h1>
           Đóng góp chung.
           <br />
