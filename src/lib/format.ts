@@ -37,3 +37,16 @@ export function formatDate(value: string): string {
 export function formatRatio(value: number): string {
   return ratioFormatter.format(value);
 }
+
+const weekdayFormatter = new Intl.DateTimeFormat('vi-VN', {
+  weekday: 'long',
+  timeZone: 'Asia/Ho_Chi_Minh',
+});
+
+/** "Thứ Năm, 15/10/2026"; falls back to formatDate's "—" for unreadable dates. */
+export function formatDayWithWeekday(value: string): string {
+  const day = formatDate(value);
+  if (day === '—') return day;
+  const weekday = weekdayFormatter.format(new Date(value.trim()));
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}`;
+}

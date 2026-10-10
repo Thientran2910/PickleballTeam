@@ -1,6 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
+import { formatVnd } from '../../lib/format';
 import { makeTeamData } from '../../test/fixtures';
+import { useBrowserLikeDialog } from '../members/dialogTestEnv';
 import { SessionsPage } from './SessionsPage';
 
 const session = (overrides: Record<string, unknown> = {}) => ({
@@ -79,5 +81,61 @@ describe('SessionsPage', () => {
       'Chi phí',
       'Trạng thái',
     ]);
+  });
+
+  describe('session detail', () => {
+    useBrowserLikeDialog();
+
+    it('opens the session detail with its expenses and matches from the date cell', () => {
+      const data = makeTeamData({ sessions: [session()] });
+      data.expenses = [
+        { ...data.expenses[0], id: 'E-IN', sessionId: 'SES-TEST-001', category: 'Tiền sân', recordedExpense: 300_000 },
+        { ...data.expenses[0], id: 'E-OUT', sessionId: 'SES-OTHER', category: 'Không liên quan' },
+      ];
+      data.matches = [
+        {
+          validation: 'Hợp lệ',
+          date: '2026-10-09',
+          team1Player1: 'An',
+          team1Player2: 'Bình',
+          team2Player1: 'Chi',
+          team2Player2: 'Dũng',
+          team1Score: 11,
+          team2Score: 7,
+          winner: 'Đội 1',
+          sessionId: 'SES-TEST-001',
+        },
+      ];
+      render(<SessionsPage data={data} />);
+      const opener = screen.getByRole('button', { name: '9/10/2026' });
+      fireEvent.click(opener);
+
+      const dialog = screen.getByRole('dialog', { name: 'Thứ Sáu, 9/10/2026' });
+      expect(within(dialog).getByText('CHI TIẾT BUỔI CHƠI')).toBeInTheDocument();
+      expect(dialog).toHaveTextContent('18:30 – 20:30 · Sân thử nghiệm · Buổi chơi thử nghiệm');
+      expect(within(dialog).getByText('Đã hoàn thành')).toBeInTheDocument();
+      expect(within(dialog).getByText('Số sân').previousSibling).toHaveTextContent('2');
+      expect(within(dialog).getByText('Tổng chi phí buổi').previousSibling).toHaveTextContent(
+        formatVnd(360_000),
+      );
+      expect(within(dialog).getByText('Tiền sân')).toBeInTheDocument();
+      expect(within(dialog).queryByText('Không liên quan')).not.toBeInTheDocument();
+      expect(within(dialog).getByText('An & Bình')).toBeInTheDocument();
+      expect(within(dialog).getByText('11 – 7')).toBeInTheDocument();
+
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Đóng chi tiết buổi chơi' }));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(opener).toHaveFocus();
+    });
+
+    it('shows empty copy when a session has no linked expenses or matches', () => {
+      render(<SessionsPage data={makeTeamData({ sessions: [session()] })} />);
+      fireEvent.click(screen.getByRole('button', { name: '9/10/2026' }));
+      const dialog = screen.getByRole('dialog');
+      expect(within(dialog).getByText('Chưa có khoản chi')).toBeInTheDocument();
+      expect(within(dialog).getByText('Chưa có trận đấu')).toBeInTheDocument();
+      fireEvent.keyDown(dialog, { key: 'Escape' });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });

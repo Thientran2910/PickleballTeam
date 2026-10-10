@@ -1,24 +1,15 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { DataTable, type Column } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
 import type { PageProps } from '../../data/schema';
 import { formatDate, formatVnd } from '../../lib/format';
 import '../activities.css';
-import { toSessionView, type SessionView } from './adapters';
+import { countOrNull, toSessionView, type SessionView } from './adapters';
+import { useSessionDetail } from './useSessionDetail';
 
 type SessionRow = SessionView & { courts: number | null; guests: number | null };
 
 const EMPTY_SUBTITLE = 'Dữ liệu sẽ xuất hiện khi đội cập nhật Google Sheet.';
-
-// Unknown or unreadable counts stay null so they are never summed as zero.
-function countOrNull(value: unknown): number | null {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
 
 function integer(value: number): string {
   return value.toLocaleString('vi-VN');
@@ -26,33 +17,41 @@ function integer(value: number): string {
 
 const countCell = (value: number | null) => (value === null ? '—' : integer(value));
 
-const sessionColumns: Column<SessionRow>[] = [
-  { id: 'date', header: 'Ngày', render: (row) => formatDate(row.date) },
-  { id: 'activity', header: 'Hoạt động', render: (row) => row.activity },
-  { id: 'court', header: 'Sân', render: (row) => row.court },
-  {
-    id: 'time',
-    header: 'Giờ',
-    render: (row) => `${row.start} – ${row.end}`,
-  },
-  { id: 'courts', header: 'Số sân', render: (row) => countCell(row.courts) },
-  {
-    id: 'attendance',
-    header: 'Thành viên',
-    render: (row) => countCell(row.attendanceCount),
-  },
-  { id: 'guests', header: 'Khách', render: (row) => countCell(row.guests) },
-  {
-    id: 'cost',
-    header: 'Chi phí',
-    render: (row) => (row.totalCost === null ? '—' : formatVnd(row.totalCost)),
-  },
-  {
-    id: 'status',
-    header: 'Trạng thái',
-    render: (row) => <span className="tag">{row.status}</span>,
-  },
-];
+function sessionColumns(
+  sessionLink: (id: string, label: string) => ReactNode,
+): Column<SessionRow>[] {
+  return [
+    {
+      id: 'date',
+      header: 'Ngày',
+      render: (row) => sessionLink(row.id, formatDate(row.date)),
+    },
+    { id: 'activity', header: 'Hoạt động', render: (row) => row.activity },
+    { id: 'court', header: 'Sân', render: (row) => row.court },
+    {
+      id: 'time',
+      header: 'Giờ',
+      render: (row) => `${row.start} – ${row.end}`,
+    },
+    { id: 'courts', header: 'Số sân', render: (row) => countCell(row.courts) },
+    {
+      id: 'attendance',
+      header: 'Thành viên',
+      render: (row) => countCell(row.attendanceCount),
+    },
+    { id: 'guests', header: 'Khách', render: (row) => countCell(row.guests) },
+    {
+      id: 'cost',
+      header: 'Chi phí',
+      render: (row) => (row.totalCost === null ? '—' : formatVnd(row.totalCost)),
+    },
+    {
+      id: 'status',
+      header: 'Trạng thái',
+      render: (row) => <span className="tag">{row.status}</span>,
+    },
+  ];
+}
 
 function total(values: (number | null)[]): { sum: number; unknown: number } {
   let sum = 0;
@@ -85,6 +84,7 @@ function Stat({
 }
 
 export function SessionsPage({ data }: PageProps) {
+  const { sessionLink, dialog } = useSessionDetail(data);
   const { sessions, invalidCount } = useMemo(() => {
     const readable: SessionRow[] = [];
     let rejected = 0;
@@ -151,7 +151,7 @@ export function SessionsPage({ data }: PageProps) {
         <DataTable
           caption="Lịch chơi"
           rows={sessions}
-          columns={sessionColumns}
+          columns={sessionColumns(sessionLink)}
           rowKey={(row) => row.id}
         />
       ) : (
@@ -162,6 +162,8 @@ export function SessionsPage({ data }: PageProps) {
           description={data.sessions.length === 0 ? EMPTY_SUBTITLE : undefined}
         />
       )}
+
+      {dialog}
     </div>
   );
 }

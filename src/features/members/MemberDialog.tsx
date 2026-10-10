@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useModalDialog } from '../../components/useModalDialog';
 import type { TeamData } from '../../data/schema';
 import { formatVnd } from '../../lib/format';
 import { formatCount, formatWinRate } from './memberFormat';
@@ -17,24 +17,8 @@ export function MemberDialog({
   opener?: HTMLElement | null;
   onClose(): void;
 }) {
-  const ref = useRef<HTMLDialogElement>(null);
+  const ref = useModalDialog(opener);
   const member = data.members.find((row) => row.name === name);
-
-  useEffect(() => {
-    const dialog = ref.current;
-    if (!dialog) return undefined;
-    // React detaches the <dialog> before this cleanup runs, so the browser cannot restore focus itself.
-    const returnTo = opener ?? document.activeElement;
-    if (typeof dialog.showModal === 'function') {
-      if (!dialog.open) dialog.showModal();
-    } else {
-      dialog.setAttribute('open', '');
-    }
-    return () => {
-      if (typeof dialog.close === 'function' && dialog.open) dialog.close();
-      if (returnTo instanceof HTMLElement && returnTo.isConnected) returnTo.focus();
-    };
-  }, [opener]);
 
   if (!member) return null;
   const income = data.income.filter((row) => row.member === name);

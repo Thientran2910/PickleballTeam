@@ -66,6 +66,8 @@
 .member-dialog::backdrop { background: #1d342c88; }
 .member-dialog .close { float: right; }
 .member-dialog h2 { font-size: 36px; margin: 20px 0; }
+/* Space between stacked sections, e.g. the session detail's expenses then matches. */
+.member-dialog :is(.table-wrap, .empty) + h3 { margin-top: 32px; }
 
 @media (max-width: 1100px) {
   .members { grid-template-columns: repeat(2, 1fr); }

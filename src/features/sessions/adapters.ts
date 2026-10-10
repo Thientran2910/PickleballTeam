@@ -13,6 +13,16 @@ export type SessionView = {
   status: string;
 };
 
+// Unknown or unreadable counts stay null so they are never summed as zero.
+export function countOrNull(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 type SessionResult = { ok: true; value: SessionView } | InvalidRecord;
 
 function textCell(value: unknown, field: string): string | InvalidRecord {

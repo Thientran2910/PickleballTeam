@@ -1,13 +1,16 @@
 import type { PageProps, TeamData } from '../../data/schema';
-import { formatDate, formatVnd } from '../../lib/format';
+import { formatDate, formatDayWithWeekday, formatVnd } from '../../lib/format';
 import { monthKey, vietnamDayKey } from '../finance/selectors';
 import { useMemberProfile } from '../members/useMemberProfile';
+import { toSessionView, type SessionView } from '../sessions/adapters';
+import { useSessionDetail } from '../sessions/useSessionDetail';
 
 type Expense = TeamData['expenses'][number];
 
 const MAX_MONTHS = 8;
 const MAX_CATEGORIES = 6;
 const MAX_RECENT = 5;
+const MAX_UPCOMING = 3;
 
 function monthLabel(key: string): string {
   const [year, month] = key.split('-');
@@ -54,6 +57,20 @@ function recentExpenses(expenses: Expense[]) {
     .slice(0, MAX_RECENT);
 }
 
+function upcomingSessions(rows: TeamData['sessions'], today: string) {
+  const upcoming: { session: SessionView; day: string }[] = [];
+  for (const row of rows) {
+    const result = toSessionView(row);
+    if (!result.ok) continue;
+    const day = vietnamDayKey(result.value.date);
+    if (day && day >= today) upcoming.push({ session: result.value, day });
+  }
+  return upcoming
+    .sort((a, b) => a.day.localeCompare(b.day) || a.session.start.localeCompare(b.session.start))
+    .slice(0, MAX_UPCOMING)
+    .map(({ session }) => session);
+}
+
 function MonthlyChart({ months }: { months: { key: string; total: number }[] }) {
   const width = 600;
   const height = 220;
@@ -94,11 +111,14 @@ function MonthlyChart({ months }: { months: { key: string; total: number }[] }) 
 
 export function OverviewPage({ data }: PageProps) {
   const { memberLink, dialog } = useMemberProfile(data);
+  const { sessionLink, dialog: sessionDialog } = useSessionDetail(data);
   const o = data.overview;
   const months = monthlyExpenses(data.expenses);
   const categories = categoryTotals(data.expenses);
   const categoryMax = Math.max(...categories.map((c) => c.total), 1);
   const recent = recentExpenses(data.expenses);
+  const today = vietnamDayKey(new Date().toISOString()) ?? '';
+  const upcoming = upcomingSessions(data.sessions, today);
   const missing = data.income.filter(
     (row) => row.period === o.fundPeriod && row.missing > 0,
   );
@@ -234,6 +254,33 @@ export function OverviewPage({ data }: PageProps) {
         </div>
 
         <div>
+          <section className="panel" aria-labelledby="ov-upcoming">
+            <div className="row">
+              <h3 id="ov-upcoming">Lịch thi đấu sắp tới</h3>
+              <a href="#sessions">Xem lịch →</a>
+            </div>
+            {upcoming.length === 0 ? (
+              <p className="muted">Chưa có buổi chơi nào sắp tới.</p>
+            ) : (
+              <ul className="activity-list">
+                {upcoming.map((s) => (
+                  <li className="activity row" key={s.id}>
+                    <div>
+                      {sessionLink(
+                        s.id,
+                        `${formatDayWithWeekday(s.date)} · ${s.start} – ${s.end}`,
+                      )}
+                      <small>
+                        {s.court} · {s.activity}
+                      </small>
+                    </div>
+                    <span className="tag">{s.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section className="panel dark" aria-labelledby="ov-period">
             <div className="eyebrow">Đợt {o.fundPeriod}</div>
             <h3 id="ov-period" style={{ marginTop: 14 }}>
@@ -283,6 +330,7 @@ export function OverviewPage({ data }: PageProps) {
       </div>
 
       {dialog}
+      {sessionDialog}
     </div>
   );
 }

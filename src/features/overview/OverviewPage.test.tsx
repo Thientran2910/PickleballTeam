@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { formatVnd } from '../../lib/format';
 import { makeTeamData } from '../../test/fixtures';
 import { useBrowserLikeDialog } from '../members/dialogTestEnv';
@@ -154,5 +154,70 @@ describe('OverviewPage', () => {
     expect(
       screen.getByRole('img', { name: /Chi phí ghi nhận theo tháng\. 10\/2026/ }),
     ).toBeInTheDocument();
+  });
+
+  describe('upcoming sessions', () => {
+    afterEach(() => vi.useRealTimers());
+
+    const session = (id: string, date: string, start = '20:00', status = 'Dự kiến') => ({
+      id,
+      date,
+      activity: 'Chơi thường',
+      venue: `Sân ${id}`,
+      start,
+      end: '22:00',
+      courts: 1,
+      guests: '',
+      memberCount: 0,
+      totalCost: 460_000,
+      status,
+    });
+
+    it('lists the next sessions from today in Vietnam time, earliest first', () => {
+      // 23:30 on 09/10 UTC is already 10/10 in Vietnam.
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-09T23:30:00Z'));
+      const data = makeTeamData();
+      data.sessions = [
+        session('PAST', '2026-10-09T00:00:00+07:00'),
+        session('LATE', '2026-10-20T00:00:00+07:00'),
+        session('TODAY', '2026-10-10T00:00:00+07:00'),
+        session('EARLY', '2026-10-15T00:00:00+07:00', '18:00'),
+        session('NIGHT', '2026-10-15T00:00:00+07:00', '20:00'),
+        { id: 'BROKEN', date: 'không rõ' },
+      ];
+      render(<OverviewPage data={data} />);
+      const card = screen.getByRole('heading', { name: 'Lịch thi đấu sắp tới' })
+        .closest('section') as HTMLElement;
+      const venues = within(card)
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('small')?.textContent);
+      expect(venues).toEqual([
+        'Sân TODAY · Chơi thường',
+        'Sân EARLY · Chơi thường',
+        'Sân NIGHT · Chơi thường',
+      ]);
+      expect(within(card).getAllByText('Dự kiến')).toHaveLength(3);
+      fireEvent.click(
+        within(card).getByRole('button', { name: 'Thứ Bảy, 10/10/2026 · 20:00 – 22:00' }),
+      );
+      expect(screen.getByRole('dialog', { name: 'Thứ Bảy, 10/10/2026' })).toHaveTextContent(
+        'Sân TODAY',
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Đóng chi tiết buổi chơi' }));
+      expect(within(card).getByRole('link', { name: 'Xem lịch →' })).toHaveAttribute(
+        'href',
+        '#sessions',
+      );
+    });
+
+    it('shows empty copy when nothing is scheduled ahead', () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-10-10T03:00:00Z'));
+      const data = makeTeamData();
+      data.sessions = [session('PAST', '2026-10-01T00:00:00+07:00')];
+      render(<OverviewPage data={data} />);
+      expect(screen.getByText('Chưa có buổi chơi nào sắp tới.')).toBeInTheDocument();
+    });
   });
 });
