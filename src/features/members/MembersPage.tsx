@@ -50,19 +50,23 @@ export function MembersPage({ data }: PageProps) {
         <div className="members" role="list" aria-label="Danh sách thành viên">
           {rows.map((member, index) => (
             <div role="listitem" key={`${member.name}-${index}`} className="member-item">
-              <button
-                type="button"
-                className="member-card"
-                aria-haspopup="dialog"
-                onClick={() => setSelected(member.name)}
-              >
+              <article className="member-card">
                 <div className="row">
                   <span className="avatar" aria-hidden="true">{initials(member.name)}</span>
                   <span className={member.missing > 0 ? 'tag warn' : 'tag'}>
                     {member.currentPeriodStatus || '—'}
                   </span>
                 </div>
-                <h3>{member.name}</h3>
+                <h3>
+                  <button
+                    type="button"
+                    className="member-open"
+                    aria-haspopup="dialog"
+                    onClick={() => setSelected(member.name)}
+                  >
+                    {member.name}
+                  </button>
+                </h3>
                 <small className="muted">{member.status}</small>
                 <div className="mini-stats">
                   <div>
@@ -81,7 +85,7 @@ export function MembersPage({ data }: PageProps) {
                 <p className="footnote">
                   Còn thiếu mọi đợt: {formatVnd(member.missing)} · Xem hồ sơ →
                 </p>
-              </button>
+              </article>
             </div>
           ))}
         </div>

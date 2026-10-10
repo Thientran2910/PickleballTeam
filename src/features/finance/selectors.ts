@@ -122,11 +122,12 @@ function normalizeQuery(query: string): string {
   return query.trim().toLocaleLowerCase('vi-VN');
 }
 
+/** Free-text search runs over text fields only, so "100" never matches an amount. */
 function matchesQuery(values: unknown[], query: string): boolean {
   const needle = normalizeQuery(query);
   if (!needle) return true;
   const haystack = values
-    .filter((value) => typeof value === 'string' || typeof value === 'number')
+    .filter((value): value is string => typeof value === 'string')
     .join(' ')
     .toLocaleLowerCase('vi-VN');
   return haystack.includes(needle);
@@ -154,7 +155,7 @@ export function searchIncome(
   return rows.filter(
     (row) =>
       (!filter.period || row.period === filter.period) &&
-      matchesQuery(Object.values(row), filter.query),
+      matchesQuery([row.period, row.member, row.status, row.method], filter.query),
   );
 }
 
@@ -167,7 +168,7 @@ export function searchExpenses(
     .filter(
       (row) =>
         (!filter.month || monthKey(row.date) === filter.month) &&
-        matchesQuery(Object.values(row), filter.query),
+        matchesQuery([row.id, row.category, row.paidBy, row.source], filter.query),
     )
     .map((row, index) => ({ row, index, day: vietnamDayKey(row.date) ?? '' }))
     .sort((a, b) =>
@@ -177,7 +178,7 @@ export function searchExpenses(
 }
 
 export function searchAdvances(rows: AdvanceRow[], query: string): AdvanceRow[] {
-  return rows.filter((row) => matchesQuery(Object.values(row), query));
+  return rows.filter((row) => matchesQuery([row.member, row.status], query));
 }
 
 export function sumAdvanceRemaining(rows: AdvanceRow[]): number {
@@ -220,7 +221,7 @@ export function searchRefunds(
     .filter(
       (view) =>
         (!filter.month || monthKey(view.date) === filter.month) &&
-        matchesQuery(Object.values(view.raw), filter.query),
+        matchesQuery([view.member, view.expenseId, view.method], filter.query),
     );
 }
 

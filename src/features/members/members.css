@@ -14,8 +14,23 @@
   color: var(--ink);
   padding: 24px;
   width: 100%;
+  position: relative;
 }
 .member-card:hover { border-color: var(--green); transform: translateY(-2px); }
+.member-card:focus-within { border-color: var(--green); }
+/* The name button stretches over the whole card so the card stays one click target. */
+.member-open {
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+.member-open::after { content: ''; position: absolute; inset: 0; border-radius: 12px; }
+.member-open:focus-visible { outline: none; }
+.member-open:focus-visible::after { outline: 2px solid var(--green); outline-offset: 2px; }
 .avatar {
   display: flex;
   align-items: center;

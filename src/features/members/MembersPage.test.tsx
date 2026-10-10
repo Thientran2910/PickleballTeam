@@ -2,9 +2,11 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { formatVnd } from '../../lib/format';
 import { makeTeamData } from '../../test/fixtures';
+import { useBrowserLikeDialog } from './dialogTestEnv';
 import { MembersPage } from './MembersPage';
 
 describe('MembersPage', () => {
+  useBrowserLikeDialog();
   it('shows the reported missing amount rather than recomputing it', () => {
     const data = makeTeamData();
     data.members = [
@@ -12,7 +14,7 @@ describe('MembersPage', () => {
     ];
     render(<MembersPage data={data} />);
 
-    const card = screen.getByRole('button', { name: /An/ });
+    const card = screen.getByRole('article');
     expect(card.textContent).toContain(`Còn thiếu mọi đợt: ${formatVnd(1_000_000)}`);
     expect(card.textContent).not.toContain(formatVnd(930_000));
   });
@@ -38,7 +40,8 @@ describe('MembersPage', () => {
     data.members = [{ ...data.members[0], matches: 0, wins: 0, losses: 0, winRate: 0 }];
     render(<MembersPage data={data} />);
 
-    const card = screen.getByRole('button', { name: /An Thử Nghiệm/ });
+    const card = screen.getByRole('article');
+    expect(within(card).getByRole('heading', { name: 'An Thử Nghiệm' })).toBeInTheDocument();
     expect(within(card).getByText('—')).toBeInTheDocument();
     expect(within(card).queryByText('0%')).not.toBeInTheDocument();
   });
@@ -59,6 +62,19 @@ describe('MembersPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /An Thử Nghiệm/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('returns focus to the member card after Escape or the close button', () => {
+    render(<MembersPage data={makeTeamData()} />);
+    const card = screen.getByRole('button', { name: /An Thử Nghiệm/ });
+    card.focus();
+    fireEvent.click(card);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(card).toHaveFocus();
+
+    fireEvent.click(card);
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
+    expect(card).toHaveFocus();
   });
 
   it('distinguishes an empty source', () => {
