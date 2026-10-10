@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { DataTable, type Column } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
 import type { PageProps } from '../../data/schema';
@@ -6,123 +6,162 @@ import { formatDate, formatVnd } from '../../lib/format';
 import '../activities.css';
 import { toSessionView, type SessionView } from './adapters';
 
-const sessionColumns: Column<SessionView>[] = [
+type SessionRow = SessionView & { courts: number | null; guests: number | null };
+
+const EMPTY_SUBTITLE = 'Dữ liệu sẽ xuất hiện khi đội cập nhật Google Sheet.';
+
+// Unknown or unreadable counts stay null so they are never summed as zero.
+function countOrNull(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function integer(value: number): string {
+  return value.toLocaleString('vi-VN');
+}
+
+const countCell = (value: number | null) => (value === null ? '—' : integer(value));
+
+const sessionColumns: Column<SessionRow>[] = [
   { id: 'date', header: 'Ngày', render: (row) => formatDate(row.date) },
   { id: 'activity', header: 'Hoạt động', render: (row) => row.activity },
   { id: 'court', header: 'Sân', render: (row) => row.court },
   {
     id: 'time',
     header: 'Giờ',
-    render: (row) => `${row.start}–${row.end}`,
+    render: (row) => `${row.start} – ${row.end}`,
   },
+  { id: 'courts', header: 'Số sân', render: (row) => countCell(row.courts) },
   {
     id: 'attendance',
     header: 'Thành viên',
-    render: (row) => row.attendanceCount ?? '—',
+    render: (row) => countCell(row.attendanceCount),
   },
+  { id: 'guests', header: 'Khách', render: (row) => countCell(row.guests) },
   {
     id: 'cost',
-    header: 'Tổng chi phí',
+    header: 'Chi phí',
     render: (row) => (row.totalCost === null ? '—' : formatVnd(row.totalCost)),
   },
-  { id: 'status', header: 'Trạng thái', render: (row) => row.status },
+  {
+    id: 'status',
+    header: 'Trạng thái',
+    render: (row) => <span className="tag">{row.status}</span>,
+  },
 ];
 
-export function SessionsPage({ data }: PageProps) {
-  const [dateFilter, setDateFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+function total(values: (number | null)[]): { sum: number; unknown: number } {
+  let sum = 0;
+  let unknown = 0;
+  for (const value of values) {
+    if (value === null) unknown += 1;
+    else sum += value;
+  }
+  return { sum, unknown };
+}
 
+function Stat({
+  value,
+  unknown,
+  label,
+}: {
+  value: string;
+  unknown: number;
+  label: string;
+}) {
+  return (
+    <div className="stat">
+      <span className="money">{value}</span>
+      <small>
+        {label}
+        {unknown > 0 ? ` · ${unknown} buổi chưa ghi` : ''}
+      </small>
+    </div>
+  );
+}
+
+export function SessionsPage({ data }: PageProps) {
   const { sessions, invalidCount } = useMemo(() => {
-    const readable: SessionView[] = [];
+    const readable: SessionRow[] = [];
     let rejected = 0;
     for (const row of data.sessions) {
       const result = toSessionView(row);
-      if (result.ok) readable.push(result.value);
-      else rejected += 1;
+      if (result.ok) {
+        readable.push({
+          ...result.value,
+          courts: countOrNull(row.courts),
+          guests: countOrNull(row.guests),
+        });
+      } else {
+        rejected += 1;
+      }
     }
     readable.sort((left, right) => right.date.localeCompare(left.date));
     return { sessions: readable, invalidCount: rejected };
   }, [data.sessions]);
 
-  const statuses = useMemo(
-    () =>
-      [...new Set(sessions.map((row) => row.status))]
-        .filter((status) => status !== '—')
-        .sort((left, right) => left.localeCompare(right, 'vi')),
-    [sessions],
-  );
-  const filtered = sessions.filter(
-    (row) =>
-      (!dateFilter || row.date.slice(0, 10) === dateFilter) &&
-      (!statusFilter || row.status === statusFilter),
-  );
-  const hasFilters = dateFilter !== '' || statusFilter !== '';
-  const resetFilters = () => {
-    setDateFilter('');
-    setStatusFilter('');
-  };
+  const members = total(sessions.map((row) => row.attendanceCount));
+  const costs = total(sessions.map((row) => row.totalCost));
+  const guests = total(sessions.map((row) => row.guests));
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <h2>Lịch chơi</h2>
-        <p>Lịch được sắp theo ngày mới nhất; thời gian giữ theo giờ địa phương.</p>
-      </header>
+    <div className="page activity-page">
+      <div className="page-title">
+        <h2 className="eyebrow">
+          <span aria-hidden="true">TEAM ATLAS · 05 / </span>Lịch chơi
+        </h2>
+        <h1>
+          Hẹn nhau.
+          <br />
+          <em>Trên sân.</em>
+        </h1>
+        <p className="muted">Lịch buổi chơi, số người tham gia và chi phí theo buổi.</p>
+      </div>
 
-      <section className="block" aria-labelledby="sessions-title">
-        <div className="section-heading">
-          <h3 id="sessions-title">Các buổi chơi</h3>
-          <div className="filters" aria-label="Bộ lọc lịch chơi">
-            <label>
-              <span>Ngày chơi</span>
-              <input
-                type="date"
-                value={dateFilter}
-                onChange={(event) => setDateFilter(event.target.value)}
-              />
-            </label>
-            <label>
-              <span>Trạng thái</span>
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="">Tất cả</option>
-                {statuses.map((status) => (
-                  <option key={status}>{status}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </div>
+      <div className="stats">
+        <Stat value={integer(sessions.length)} unknown={0} label="Buổi đã ghi nhận" />
+        <Stat
+          value={integer(members.sum)}
+          unknown={members.unknown}
+          label="Lượt thành viên tham gia"
+        />
+        <Stat
+          value={formatVnd(costs.sum)}
+          unknown={costs.unknown}
+          label="Tổng chi theo buổi"
+        />
+        <Stat
+          value={integer(guests.sum)}
+          unknown={guests.unknown}
+          label="Lượt khách tham gia"
+        />
+      </div>
 
-        {invalidCount > 0 ? (
-          <p className="data-warning" role="status">
-            {invalidCount} bản ghi lịch chơi không đọc được và đã được bỏ qua.
-          </p>
-        ) : null}
+      {invalidCount > 0 ? (
+        <p className="data-warning" role="status">
+          {invalidCount} bản ghi lịch chơi không đọc được và đã được bỏ qua.
+        </p>
+      ) : null}
 
-        {data.sessions.length > 0 && sessions.length === 0 ? (
-          <EmptyState title="Không có bản ghi lịch chơi hợp lệ" />
-        ) : filtered.length === 0 && hasFilters ? (
-          <EmptyState
-            title="Không có kết quả phù hợp"
-            action={
-              <button type="button" className="btn btn-ghost" onClick={resetFilters}>
-                Xóa bộ lọc
-              </button>
-            }
-          />
-        ) : (
-          <DataTable
-            caption="Lịch chơi"
-            rows={filtered}
-            columns={sessionColumns}
-            rowKey={(row) => row.id}
-            emptyMessage="Chưa có dữ liệu lịch chơi"
-          />
-        )}
-      </section>
+      {sessions.length > 0 ? (
+        <DataTable
+          caption="Lịch chơi"
+          rows={sessions}
+          columns={sessionColumns}
+          rowKey={(row) => row.id}
+        />
+      ) : (
+        <EmptyState
+          title={
+            data.sessions.length > 0 ? 'Không có bản ghi lịch chơi hợp lệ' : 'Chưa có dữ liệu'
+          }
+          description={data.sessions.length === 0 ? EMPTY_SUBTITLE : undefined}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { makeTeamData } from '../../test/fixtures';
 import { AssetsPage } from './AssetsPage';
@@ -17,33 +17,36 @@ describe('AssetsPage', () => {
     render(<AssetsPage data={data} />);
     expect(screen.getByText('Bóng thử nghiệm')).toBeInTheDocument();
     expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
     expect(screen.queryByText('01/01/1970')).not.toBeInTheDocument();
   });
 
-  it('searches by name and filters by statuses present in the snapshot', () => {
+  it('labels blank cells as not recorded and keeps the reference columns', () => {
     const data = makeTeamData();
     data.assets = [
-      data.assets[0],
-      {
-        ...data.assets[0],
-        id: 'AST-TEST-002',
-        name: 'Vợt dự phòng',
-        status: 'Cất kho',
-      },
+      { ...data.assets[0], purchased: '', remaining: '', holder: '', status: '' },
     ];
     render(<AssetsPage data={data} />);
-
-    expect(screen.getByRole('option', { name: 'Cất kho' })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('Tìm dụng cụ'), {
-      target: { value: 'không tồn tại' },
-    });
-    expect(screen.getByText('Không có kết quả phù hợp')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Xóa bộ lọc' }));
-    expect(screen.getByText('Vợt dự phòng')).toBeInTheDocument();
+    const headers = within(screen.getByRole('table'))
+      .getAllByRole('columnheader')
+      .map((cell) => cell.textContent);
+    expect(headers).toEqual([
+      'Vật dụng',
+      'SL mua',
+      'SL hiện tại',
+      'Đơn vị',
+      'Giá trị mua',
+      'Người giữ',
+      'Tình trạng',
+      'Ngày mua',
+    ]);
+    expect(screen.getAllByText('Chưa ghi')).toHaveLength(3);
+    expect(screen.getByText('Chưa cập nhật')).toBeInTheDocument();
+    expect(screen.getByText(/không được cộng thêm vào tổng chi quỹ/)).toBeInTheDocument();
   });
 
   it('shows a dedicated empty state when the API array is empty', () => {
     render(<AssetsPage data={makeTeamData({ assets: [] })} />);
-    expect(screen.getByText('Chưa có dữ liệu dụng cụ')).toBeInTheDocument();
+    expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument();
   });
 });
