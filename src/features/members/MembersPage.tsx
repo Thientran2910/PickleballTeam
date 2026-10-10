@@ -1,99 +1,93 @@
 import { useState } from 'react';
-import { DataTable, type Column } from '../../components/DataTable';
-import { EmptyState } from '../../components/EmptyState';
-import type { PageProps, TeamData } from '../../data/schema';
-import { formatDate, formatRatio, formatVnd } from '../../lib/format';
+import type { PageProps } from '../../data/schema';
+import { formatVnd } from '../../lib/format';
+import { MemberDialog } from './MemberDialog';
+import { formatCount, formatWinRate } from './memberFormat';
 import { selectMembers } from './selectors';
 import './members.css';
 
-type MemberRow = TeamData['members'][number];
-
-function unique(values: string[]): string[] {
-  return [...new Set(values)];
+function initials(name: string): string {
+  return name
+    .split(' ')
+    .map((part) => [...part][0] ?? '')
+    .slice(-2)
+    .join('');
 }
-
-const memberColumns: Column<MemberRow>[] = [
-  { id: 'name', header: 'Thành viên', render: (row) => row.name },
-  { id: 'status', header: 'Trạng thái', render: (row) => row.status },
-  { id: 'joinedAt', header: 'Tham gia từ', render: (row) => formatDate(row.joinedAt) },
-  { id: 'required', header: 'Phải đóng', render: (row) => formatVnd(row.required) },
-  { id: 'paid', header: 'Đã đóng', render: (row) => formatVnd(row.paid) },
-  { id: 'missing', header: 'Còn thiếu', render: (row) => formatVnd(row.missing) },
-  { id: 'currentPeriodStatus', header: 'Kỳ hiện tại', render: (row) => row.currentPeriodStatus },
-  { id: 'sessions', header: 'Số buổi', render: (row) => row.sessions },
-  {
-    id: 'matches',
-    header: 'Số trận',
-    render: (row) => (row.matches === 0 ? 'Chưa thi đấu' : row.matches),
-  },
-  { id: 'wins', header: 'Thắng', render: (row) => row.wins },
-  { id: 'losses', header: 'Thua', render: (row) => row.losses },
-  {
-    id: 'winRate',
-    header: 'Tỷ lệ thắng',
-    render: (row) => (row.matches === 0 ? '—' : formatRatio(row.winRate)),
-  },
-];
 
 export function MembersPage({ data }: PageProps) {
   const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
-  const rows = selectMembers(data.members, query, status);
-  const filterActive = Boolean(query.trim() || status);
-
-  const clearFilters = () => {
-    setQuery('');
-    setStatus('');
-  };
+  const [selected, setSelected] = useState<string | null>(null);
+  const rows = selectMembers(data.members, query, '');
 
   return (
     <div className="page members-page">
-      <header className="page-head">
-        <h2>Thành viên</h2>
-        <p>Tình hình đóng quỹ và thành tích của từng thành viên theo Sheet của đội.</p>
-      </header>
+      <div className="page-title">
+        <div className="eyebrow">TEAM ATLAS · 03 / THÀNH VIÊN</div>
+        <h1>Những người cùng đội.</h1>
+        <p className="muted">Mỗi thành viên, một hồ sơ đóng góp và thành tích.</p>
+      </div>
 
-      <section className="block" aria-labelledby="members-list-title">
-        <div>
-          <h3 id="members-list-title">Danh sách thành viên</h3>
-          <p className="block-note">Khoản còn thiếu được hiển thị nguyên từ Sheet, không tính bù giữa các kỳ.</p>
+      <div className="filters">
+        <input
+          type="search"
+          aria-label="Tìm thành viên"
+          placeholder="Tìm tên thành viên…"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="empty">
+          <strong>{data.members.length === 0 ? 'Chưa có dữ liệu' : 'Không tìm thấy thành viên'}</strong>
+          {data.members.length === 0
+            ? 'Dữ liệu sẽ xuất hiện khi đội cập nhật Google Sheet.'
+            : 'Thử một tên khác.'}
         </div>
-        <div className="member-filters" aria-label="Bộ lọc thành viên">
-          <label>
-            Tìm thành viên
-            <input
-              type="search"
-              value={query}
-              placeholder="Nhập tên"
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-          <label>
-            Trạng thái thành viên
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="">Tất cả trạng thái</option>
-              {unique(data.members.map((row) => row.status)).map((value) => (
-                <option key={value} value={value}>{value}</option>
-              ))}
-            </select>
-          </label>
+      ) : (
+        <div className="members" role="list" aria-label="Danh sách thành viên">
+          {rows.map((member, index) => (
+            <div role="listitem" key={`${member.name}-${index}`} className="member-item">
+              <button
+                type="button"
+                className="member-card"
+                aria-haspopup="dialog"
+                onClick={() => setSelected(member.name)}
+              >
+                <div className="row">
+                  <span className="avatar" aria-hidden="true">{initials(member.name)}</span>
+                  <span className={member.missing > 0 ? 'tag warn' : 'tag'}>
+                    {member.currentPeriodStatus || '—'}
+                  </span>
+                </div>
+                <h3>{member.name}</h3>
+                <small className="muted">{member.status}</small>
+                <div className="mini-stats">
+                  <div>
+                    <strong>{formatCount(member.sessions)}</strong>
+                    <small>Buổi chơi</small>
+                  </div>
+                  <div>
+                    <strong>{formatCount(member.matches)}</strong>
+                    <small>Trận đấu</small>
+                  </div>
+                  <div>
+                    <strong>{formatWinRate(member)}</strong>
+                    <small>Tỷ lệ thắng</small>
+                  </div>
+                </div>
+                <p className="footnote">
+                  Còn thiếu mọi đợt: {formatVnd(member.missing)} · Xem hồ sơ →
+                </p>
+              </button>
+            </div>
+          ))}
         </div>
-        {data.members.length === 0 ? (
-          <EmptyState title="Chưa có dữ liệu" />
-        ) : rows.length === 0 && filterActive ? (
-          <EmptyState
-            title="Không có kết quả phù hợp"
-            action={<button type="button" className="btn btn-ghost" onClick={clearFilters}>Xóa bộ lọc thành viên</button>}
-          />
-        ) : (
-          <DataTable
-            caption="Danh sách thành viên"
-            rows={rows}
-            columns={memberColumns}
-            rowKey={(row) => row.name}
-          />
-        )}
-      </section>
+      )}
+
+      {selected ? (
+        <MemberDialog data={data} name={selected} onClose={() => setSelected(null)} />
+      ) : null}
     </div>
   );
 }

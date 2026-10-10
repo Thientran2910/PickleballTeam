@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { makeTeamData } from '../../test/fixtures';
 import {
+  listMonths,
+  readRefund,
+  searchExpenses,
+  searchIncome,
+  searchRefunds,
   selectExpenses,
   selectIncome,
   summarizeExpenses,
@@ -118,5 +123,42 @@ describe('finance selectors', () => {
         paidBy: '',
       }),
     ).toEqual([invalid]);
+  });
+});
+
+describe('finance reference-style selectors', () => {
+  it('searches income across fields within the chosen period only', () => {
+    const base = makeTeamData().income[0];
+    const rows = [
+      { ...base, period: 'A', member: 'Ánh' },
+      { ...base, period: 'B', member: 'Ánh' },
+      { ...base, period: 'B', member: 'Bình' },
+    ];
+    expect(searchIncome(rows, { period: '', query: '' })).toHaveLength(3);
+    expect(searchIncome(rows, { period: 'B', query: ' ÁNH ' })).toEqual([rows[1]]);
+  });
+
+  it('lists Vietnam-time months newest first and sorts expenses newest first', () => {
+    const base = makeTeamData().expenses[0];
+    const rows = [
+      { ...base, id: 'old', date: '2026-08-12' },
+      { ...base, id: 'edge', date: '2026-09-30T18:00:00.000Z' },
+      { ...base, id: 'bad', date: 'không rõ' },
+    ];
+    expect(listMonths(rows.map((row) => row.date))).toEqual(['2026-10', '2026-08']);
+    expect(searchExpenses(rows, { month: '', query: '' }).map((row) => row.id)).toEqual([
+      'edge',
+      'old',
+      'bad',
+    ]);
+    expect(searchExpenses(rows, { month: '2026-10', query: '' }).map((row) => row.id)).toEqual(['edge']);
+  });
+
+  it('keeps unknown refund amounts unknown', () => {
+    expect(readRefund({ amount: '120000' }).amount).toBe(120_000);
+    expect(readRefund({ amount: '' }).amount).toBeNull();
+    expect(readRefund({ amount: 'n/a' }).amount).toBeNull();
+    expect(readRefund({ amount: null }).amount).toBeNull();
+    expect(searchRefunds([{ member: 'Ánh', amount: 1 }], { month: '', query: 'ánh' })).toHaveLength(1);
   });
 });
