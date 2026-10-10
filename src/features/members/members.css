@@ -1,5 +1,5 @@
-/* Member grid, cards and profile dialog. Shared page chrome (.filters, .table-wrap,
-   .empty, .footnote) lives in ../finance/finance.css and is scoped to both pages. */
+/* Member grid, cards and profile dialog. Page chrome (.filters, titles) lives in ../finance/finance.css;
+   table and empty-state chrome in ../../styles/tables.css. */
 .members {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

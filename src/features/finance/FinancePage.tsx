@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { PageProps } from '../../data/schema';
 import { formatDate, formatVnd } from '../../lib/format';
-import { MemberDialog } from '../members/MemberDialog';
+import { useMemberProfile } from '../members/useMemberProfile';
 import {
   listMonths,
   readRefund,
@@ -15,6 +15,7 @@ import {
   summarizeRefunds,
   type FinanceTab,
 } from './selectors';
+import '../../styles/tables.css';
 import './finance.css';
 
 const TABS: ReadonlyArray<{ id: FinanceTab; label: string }> = [
@@ -96,7 +97,6 @@ export function FinancePage({ data }: PageProps) {
   // '' is "Tất cả đợt quỹ": the finance period filter starts on all periods.
   const [periodChoice, setPeriodChoice] = useState('');
   const [monthChoice, setMonthChoice] = useState('');
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const periods = useMemo(() => unique(data.income.map((row) => row.period)), [data.income]);
   const expenseMonths = useMemo(() => listMonths(data.expenses.map((row) => row.date)), [data.expenses]);
@@ -116,18 +116,7 @@ export function FinancePage({ data }: PageProps) {
     setMonthChoice('');
   };
 
-  const knownMembers = useMemo(() => new Set(data.members.map((row) => row.name)), [data.members]);
-  // Only names that have a profile become buttons; anything else would open nothing.
-  const memberLink = (name: string) =>
-    !name ? (
-      '—'
-    ) : !knownMembers.has(name) ? (
-      name
-    ) : (
-      <button type="button" className="link-button" onClick={() => setSelectedMember(name)}>
-        {name}
-      </button>
-    );
+  const { memberLink, dialog } = useMemberProfile(data);
 
   let heads: string[];
   let rows: ReactNode[][];
@@ -281,9 +270,7 @@ export function FinancePage({ data }: PageProps) {
         tiền đã chi từ quỹ được theo dõi riêng.
       </p>
 
-      {selectedMember ? (
-        <MemberDialog data={data} name={selectedMember} onClose={() => setSelectedMember(null)} />
-      ) : null}
+      {dialog}
     </div>
   );
 }

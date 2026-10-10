@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { formatVnd } from '../../lib/format';
 import { makeTeamData } from '../../test/fixtures';
+import { useBrowserLikeDialog } from '../members/dialogTestEnv';
 import { OverviewPage } from './OverviewPage';
 
 /** Value shown in the stat strip or hero card next to a label. */
@@ -15,6 +16,7 @@ function valueOf(label: string): string {
 }
 
 describe('OverviewPage', () => {
+  useBrowserLikeDialog();
   it('renders upstream balance separately from period payments', () => {
     const data = makeTeamData();
     data.overview.balance = 1_200_000;
@@ -113,5 +115,44 @@ describe('OverviewPage', () => {
     expect(screen.getByText('HỒ SƠ THÀNH VIÊN')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
     expect(screen.queryByText('HỒ SƠ THÀNH VIÊN')).not.toBeInTheDocument();
+  });
+
+  it('returns focus to the opener after Escape or the close button', () => {
+    const data = makeTeamData();
+    data.income[0].missing = 100_000;
+    render(<OverviewPage data={data} />);
+    const opener = screen.getByRole('button', { name: 'An Thử Nghiệm' });
+    // Safari does not focus a button on click, so focus is not set before clicking.
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
+    expect(opener).toHaveFocus();
+  });
+
+  it('shows names without a member profile as plain text', () => {
+    const data = makeTeamData();
+    data.income = [
+      { ...data.income[0], member: 'Khách lạ', missing: 100_000 },
+    ];
+    render(<OverviewPage data={data} />);
+    const section = screen.getByRole('heading', { name: 'Tiến độ đóng quỹ' })
+      .closest('section') as HTMLElement;
+    expect(within(section).getByText('Khách lạ')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Khách lạ' })).toBeNull();
+  });
+
+  it('puts an expense paid late on 30/09 UTC into October, like Finance', () => {
+    const data = makeTeamData();
+    data.expenses = [
+      { ...data.expenses[0], id: 'E1', date: '2026-09-30T18:00:00Z', recordedExpense: 500_000 },
+    ];
+    render(<OverviewPage data={data} />);
+    expect(
+      screen.getByRole('img', { name: /Chi phí ghi nhận theo tháng\. 10\/2026/ }),
+    ).toBeInTheDocument();
   });
 });

@@ -23,9 +23,11 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
   const busy = state.status === 'loading' || state.status === 'refreshing';
   const statusText = busy
     ? 'Đang đọc dữ liệu mới nhất từ Sheet…'
-    : state.readAt
-      ? `● Cập nhật thành công · ${readAtFormatter.format(state.readAt)} · Giờ Việt Nam`
-      : 'Chưa có dữ liệu';
+    : state.status === 'stale'
+      ? `○ Đang hiển thị dữ liệu đọc lúc ${readAtFormatter.format(state.readAt)} · Giờ Việt Nam`
+      : state.readAt
+        ? `● Cập nhật thành công · ${readAtFormatter.format(state.readAt)} · Giờ Việt Nam`
+        : 'Chưa có dữ liệu';
 
   return (
     <>
@@ -70,7 +72,7 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
             disabled={busy}
             aria-busy={busy}
           >
-            ↻ Cập nhật
+            <span aria-hidden="true">↻</span> Cập nhật
           </button>
         </div>
       </header>

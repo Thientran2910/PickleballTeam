@@ -1,18 +1,13 @@
-import { useState } from 'react';
 import type { PageProps, TeamData } from '../../data/schema';
 import { formatDate, formatVnd } from '../../lib/format';
-import { MemberDialog } from '../members/MemberDialog';
+import { monthKey, vietnamDayKey } from '../finance/selectors';
+import { useMemberProfile } from '../members/useMemberProfile';
 
 type Expense = TeamData['expenses'][number];
 
 const MAX_MONTHS = 8;
 const MAX_CATEGORIES = 6;
 const MAX_RECENT = 5;
-
-function monthKey(date: string): string | null {
-  if (formatDate(date) === '—') return null;
-  return date.trim().slice(0, 7);
-}
 
 function monthLabel(key: string): string {
   const [year, month] = key.split('-');
@@ -53,11 +48,9 @@ function categoryTotals(expenses: Expense[]) {
 
 function recentExpenses(expenses: Expense[]) {
   return [...expenses]
-    .sort((a, b) => {
-      const ka = monthKey(a.date) ? a.date : '';
-      const kb = monthKey(b.date) ? b.date : '';
-      return kb.localeCompare(ka);
-    })
+    .map((expense) => ({ expense, day: vietnamDayKey(expense.date) ?? '' }))
+    .sort((a, b) => b.day.localeCompare(a.day))
+    .map(({ expense }) => expense)
     .slice(0, MAX_RECENT);
 }
 
@@ -100,7 +93,7 @@ function MonthlyChart({ months }: { months: { key: string; total: number }[] }) 
 }
 
 export function OverviewPage({ data }: PageProps) {
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
+  const { memberLink, dialog } = useMemberProfile(data);
   const o = data.overview;
   const months = monthlyExpenses(data.expenses);
   const categories = categoryTotals(data.expenses);
@@ -258,15 +251,7 @@ export function OverviewPage({ data }: PageProps) {
               <ul className="activity-list">
                 {missing.map((row) => (
                   <li className="activity row" key={`${row.period}-${row.member}`}>
-                    <span>
-                      <button
-                        type="button"
-                        className="link-button"
-                        onClick={() => setSelectedMember(row.member)}
-                      >
-                        {row.member}
-                      </button>
-                    </span>
+                    <span>{memberLink(row.member)}</span>
                     <strong className="amount-negative">{formatVnd(row.missing)}</strong>
                   </li>
                 ))}
@@ -297,12 +282,7 @@ export function OverviewPage({ data }: PageProps) {
         </div>
       </div>
 
-      {selectedMember ? (
-        // members-page scopes the shared dialog table/footnote styles from finance.css.
-        <div className="members-page">
-          <MemberDialog data={data} name={selectedMember} onClose={() => setSelectedMember(null)} />
-        </div>
-      ) : null}
+      {dialog}
     </div>
   );
 }
