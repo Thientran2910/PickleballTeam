@@ -179,6 +179,8 @@ button:disabled { opacity: .55; cursor: wait; }
 .hero p { max-width: 490px; font-size: 14px; color: var(--muted); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; }
 .hero-actions a { display: inline-block; }
+.hero-side { display: grid; gap: 16px; }
+.hero-side .upcoming { margin: 0; }
 .hero-card {
   background: var(--sage); padding: 30px 34px; border: 1px solid #dfe6d4;
   border-radius: 18px; position: relative; overflow: hidden;

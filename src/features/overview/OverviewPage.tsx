@@ -57,13 +57,26 @@ function recentExpenses(expenses: Expense[]) {
     .slice(0, MAX_RECENT);
 }
 
-function upcomingSessions(rows: TeamData['sessions'], today: string) {
+const vietnamClockFormatter = new Intl.DateTimeFormat('en-GB', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'Asia/Ho_Chi_Minh',
+});
+
+/** Sessions that have not ended yet: later days, or today with an end time still ahead. */
+function upcomingSessions(rows: TeamData['sessions'], now: Date) {
+  const today = vietnamDayKey(now.toISOString()) ?? '';
+  const clock = vietnamClockFormatter.format(now);
   const upcoming: { session: SessionView; day: string }[] = [];
   for (const row of rows) {
     const result = toSessionView(row);
     if (!result.ok) continue;
     const day = vietnamDayKey(result.value.date);
-    if (day && day >= today) upcoming.push({ session: result.value, day });
+    if (!day || day < today) continue;
+    const { end } = result.value;
+    if (day === today && end !== '—' && end <= clock) continue;
+    upcoming.push({ session: result.value, day });
   }
   return upcoming
     .sort((a, b) => a.day.localeCompare(b.day) || a.session.start.localeCompare(b.session.start))
@@ -117,8 +130,7 @@ export function OverviewPage({ data }: PageProps) {
   const categories = categoryTotals(data.expenses);
   const categoryMax = Math.max(...categories.map((c) => c.total), 1);
   const recent = recentExpenses(data.expenses);
-  const today = vietnamDayKey(new Date().toISOString()) ?? '';
-  const upcoming = upcomingSessions(data.sessions, today);
+  const upcoming = upcomingSessions(data.sessions, new Date());
   const missing = data.income.filter(
     (row) => row.period === o.fundPeriod && row.missing > 0,
   );
@@ -154,30 +166,59 @@ export function OverviewPage({ data }: PageProps) {
           </div>
         </div>
 
-        <div className="hero-card" aria-labelledby="ov-balance">
-          <div className="row">
-            <span className="eyebrow" id="ov-balance">
-              Quỹ đội hiện có
-            </span>
-            <span className="tag">{o.fundPeriod}</span>
-          </div>
-          <div className="big">{formatVnd(o.balance)}</div>
-          <p>Tiến độ đóng quỹ đợt {o.fundPeriod}</p>
-          <div
-            className="progress"
-            role="progressbar"
-            aria-label={`Tiến độ đóng quỹ kỳ ${o.fundPeriod}`}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress)}
-          >
-            <i style={{ width: `${progress}%` }} />
-          </div>
-          <div className="row">
-            <span>
-              {formatVnd(o.periodPaid)} / {formatVnd(o.periodRequired)}
-            </span>
-            <strong>{Math.round(progress)}%</strong>
+        <div className="hero-side">
+          <section className="panel upcoming" aria-labelledby="ov-upcoming">
+            <div className="row">
+              <h3 id="ov-upcoming">Lịch thi đấu sắp tới</h3>
+              <a href="#sessions">Xem lịch →</a>
+            </div>
+            {upcoming.length === 0 ? (
+              <p className="muted">Chưa có buổi chơi nào sắp tới.</p>
+            ) : (
+              <ul className="activity-list">
+                {upcoming.map((s) => (
+                  <li className="activity row" key={s.id}>
+                    <div>
+                      {sessionLink(
+                        s.id,
+                        `${formatDayWithWeekday(s.date)} · ${s.start} – ${s.end}`,
+                      )}
+                      <small>
+                        {s.court} · {s.activity}
+                      </small>
+                    </div>
+                    <span className="tag">{s.status}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <div className="hero-card" aria-labelledby="ov-balance">
+            <div className="row">
+              <span className="eyebrow" id="ov-balance">
+                Quỹ đội hiện có
+              </span>
+              <span className="tag">{o.fundPeriod}</span>
+            </div>
+            <div className="big">{formatVnd(o.balance)}</div>
+            <p>Tiến độ đóng quỹ đợt {o.fundPeriod}</p>
+            <div
+              className="progress"
+              role="progressbar"
+              aria-label={`Tiến độ đóng quỹ kỳ ${o.fundPeriod}`}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progress)}
+            >
+              <i style={{ width: `${progress}%` }} />
+            </div>
+            <div className="row">
+              <span>
+                {formatVnd(o.periodPaid)} / {formatVnd(o.periodRequired)}
+              </span>
+              <strong>{Math.round(progress)}%</strong>
+            </div>
           </div>
         </div>
       </section>
@@ -254,33 +295,6 @@ export function OverviewPage({ data }: PageProps) {
         </div>
 
         <div>
-          <section className="panel" aria-labelledby="ov-upcoming">
-            <div className="row">
-              <h3 id="ov-upcoming">Lịch thi đấu sắp tới</h3>
-              <a href="#sessions">Xem lịch →</a>
-            </div>
-            {upcoming.length === 0 ? (
-              <p className="muted">Chưa có buổi chơi nào sắp tới.</p>
-            ) : (
-              <ul className="activity-list">
-                {upcoming.map((s) => (
-                  <li className="activity row" key={s.id}>
-                    <div>
-                      {sessionLink(
-                        s.id,
-                        `${formatDayWithWeekday(s.date)} · ${s.start} – ${s.end}`,
-                      )}
-                      <small>
-                        {s.court} · {s.activity}
-                      </small>
-                    </div>
-                    <span className="tag">{s.status}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
           <section className="panel dark" aria-labelledby="ov-period">
             <div className="eyebrow">Đợt {o.fundPeriod}</div>
             <h3 id="ov-period" style={{ marginTop: 14 }}>
