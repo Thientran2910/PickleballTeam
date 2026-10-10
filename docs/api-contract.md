@@ -52,6 +52,67 @@ Helper `pbDashboardRows_` dùng `getValues()`, nhận các dòng có key cell kh
 
 Boundary Task 1 vẫn nhận mỗi phần tử của ba mảng dưới dạng record khóa string/giá trị unknown. Task 4 phải dùng mapping đã xác minh cùng test cho bản ghi không rỗng để tạo adapter; không ép scalar chưa có mẫu, không suy diễn từ mảng rỗng và không tự lọc `validation`.
 
+### `sessions`: hợp đồng view đã xác minh
+
+Nguồn bằng chứng là mapping `sessions` trong `Dashboard.gs` của linked Apps Script, được coordinator đọc trực tiếp ở chế độ chỉ đọc ngày 10/10/2026. Ví dụ tổng hợp (không phải dữ liệu thật):
+
+```json
+{
+  "id": "SES-TEST-001",
+  "date": "2026-10-09T00:00:00+07:00",
+  "activity": "Buổi chơi thử nghiệm",
+  "venue": "Sân thử nghiệm",
+  "start": "1899-12-30T18:30:00+07:00",
+  "end": "1899-12-30T20:30:00+07:00",
+  "courts": "2",
+  "guests": 1,
+  "memberCount": 6,
+  "courtCost": 300000,
+  "totalCost": 360000,
+  "status": "Đã hoàn thành"
+}
+```
+
+Adapter dùng `venue` làm nhãn sân, `memberCount` làm số người và không tạo danh sách người tham gia vì source không xuất danh sách đó. `start`/`end` được lấy phần `HH:mm` theo chuỗi, kể cả khi mốc ngày là 1899; không đưa qua phép đổi timezone lịch sử. `memberCount`/`totalCost` chỉ nhận finite number hoặc ô rỗng; ô rỗng trở thành giá trị chưa biết và hiển thị `—`, không thành `0`. `activity`, `venue`, giờ và `status` rỗng cũng hiển thị `—`; thiếu/sai kiểu khóa cần đọc làm record không hợp lệ. `id` không rỗng và ngày lịch hợp lệ là bắt buộc.
+
+| Khóa source | Kiểu adapter chấp nhận | Cách dùng |
+|---|---|---|
+| `id` | string không rỗng | định danh dòng |
+| `date` | string có ngày lịch `YYYY-MM-DD` hợp lệ | ngày chơi |
+| `activity`, `venue`, `start`, `end`, `status` | string, kể cả chuỗi rỗng | nội dung hiển thị; rỗng thành `—` |
+| `memberCount`, `totalCost` | finite number hoặc ô rỗng (`""`/`null`) | số người/chi phí; rỗng thành chưa biết |
+| `courts`, `guests`, `courtCost` | source truyền nguyên kiểu ô | đã xác minh có khóa nhưng view đầu tiên không hiển thị hoặc suy tính từ chúng |
+
+### `matches`: hợp đồng view đã xác minh
+
+Nguồn bằng chứng là mapping `matches` trong cùng `Dashboard.gs` và công thức validation của tab BẢNG XẾP HẠNG. Ví dụ tổng hợp:
+
+```json
+{
+  "date": "2026-10-09T00:00:00+07:00",
+  "team1Player1": "Người A",
+  "team1Player2": "Người B",
+  "team2Player1": "Người C",
+  "team2Player2": "Người D",
+  "team1Score": 11,
+  "team2Score": 8,
+  "winner": "Đội 1",
+  "validation": "Hợp lệ",
+  "sessionId": "SES-TEST-001"
+}
+```
+
+Adapter chỉ nhận record có `validation` đúng bằng `Hợp lệ`, bốn tên khác nhau, điểm là finite integer không âm và không hòa, cùng `winner` khớp tỷ số. Chuỗi số không được ép thành điểm. `sessionId` rỗng trở thành `null`/`—`; các record thiếu hoặc sai kiểu được đếm và báo riêng, không bị coi là mảng rỗng và không tham gia lịch sử trận hay xếp hạng phía client.
+
+| Khóa source | Kiểu adapter chấp nhận | Xử lý ô rỗng |
+|---|---|---|
+| `date` | string có ngày lịch `YYYY-MM-DD` hợp lệ | record không hợp lệ |
+| `team1Player1`, `team1Player2`, `team2Player1`, `team2Player2` | string không rỗng | record không hợp lệ |
+| `team1Score`, `team2Score` | finite integer không âm | record không hợp lệ |
+| `winner` | `Đội 1` hoặc `Đội 2` khớp tỷ số | record không hợp lệ |
+| `validation` | đúng chuỗi `Hợp lệ` | record không hợp lệ |
+| `sessionId` | string | chuỗi rỗng thành `null`/`—` |
+
 ## Trường Sheet không có trong API
 
 Sheet có cột **Nội dung khoản chi** và **Chứng từ**, nhưng API quan sát không trả hai trường này. Frontend không lấy chúng từ nguồn khác, không phỏng đoán URL chứng từ và không thêm chúng vào giao diện.
