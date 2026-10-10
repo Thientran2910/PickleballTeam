@@ -17,7 +17,7 @@ const sessionColumns: Column<SessionView>[] = [
   },
   {
     id: 'attendance',
-    header: 'Số người',
+    header: 'Thành viên',
     render: (row) => row.attendanceCount ?? '—',
   },
   {

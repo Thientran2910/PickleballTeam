@@ -27,7 +27,7 @@ Kiểm tra bản build: `dist/index.html` có noindex; bundle không chứa chu�
 
 ## 4. Nguồn API
 
-Khóa JSON sessions/matches/refunds lấy từ Dashboard.gs (docs/api-source-evidence.md). Hiện chưa có bản ghi thật; render bản ghi lịch/trận mới chỉ kiểm bằng fixture với khóa đã xác minh.
+Khóa JSON sessions/matches/refunds lấy từ Dashboard.gs (docs/api-source-evidence.md). Cổng hợp đồng cho sessions/matches **đã đạt** (tiêu chí 8 của spec): khóa JSON được xác minh từ Dashboard.gs và có test tổng hợp không rỗng. Việc API thật chưa có bản ghi sessions/matches không rỗng là giới hạn của kiểm chứng live, không phải tiêu chí spec chưa đạt. Các kiểm tra origin sau khi publish (CORS từ GitHub Pages) vẫn **chờ** đến khi được duyệt publish.
 
 ## 5. Sửa tích hợp trong T5
 

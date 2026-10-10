@@ -20,6 +20,9 @@ Dữ liệu trong test là dữ liệu tổng hợp tự đặt; E2E mock URL `/
 
 ## Nguồn dữ liệu
 
+- Google Sheet nguồn (đã duyệt): https://docs.google.com/spreadsheets/d/1wW3S32cDyxjmS7ZNCO6tvsniLIOwlcTtFMLQ44XVVP8/edit
+- API Apps Script công khai: https://script.google.com/macros/s/AKfycbxusIn3XBgRcT2xKyvKZhDqrEKECzQNUzBvCitJ2u0Tuu05T0j0tPYhqifnHl6Do8uULw/exec
+
 URL API công khai (không phải bí mật) nằm trong `src/config.ts`, có thể ghi đè bằng `VITE_APPS_SCRIPT_URL` (xem `.env.example`). Không có token/secret nào trong frontend.
 
 ## Cập nhật số liệu
@@ -37,7 +40,7 @@ Nếu bấm Cập nhật bị lỗi, website giữ số liệu đã đọc, báo
 
 Workflow `.github/workflows/pages.yml` chạy thủ công (`workflow_dispatch`), không tự chạy khi push. Base path được tính từ tên repo (`/<repo>/`, hoặc `/` với repo `<owner>.github.io`). Điều kiện: repo public, Settings → Pages → Source: GitHub Actions. CI (`ci.yml`) chạy typecheck, lint, test và E2E.
 
-Rollback phiên bản website: chạy lại workflow Pages từ một commit/tag cũ (Run workflow → chọn ref), hoặc `git revert` commit lỗi rồi chạy lại. Lưu ý: việc này chỉ khôi phục website. Dự án không sao lưu Google Sheet tự động và không thay đổi Apps Script/Sheet.
+Rollback phiên bản website: workflow Pages không cho chọn một commit SHA bất kỳ. Cách làm: `git revert` thay đổi lỗi trên nhánh release/mặc định, kiểm tra lại CI xanh, rồi chạy thủ công workflow Pages (Run workflow). Lưu ý: việc này chỉ khôi phục website. Dự án không sao lưu Google Sheet tự động và không thay đổi Apps Script/Sheet.
 
 ## Giới hạn
 
