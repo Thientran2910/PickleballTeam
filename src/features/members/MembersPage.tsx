@@ -4,6 +4,8 @@ import { formatVnd } from '../../lib/format';
 import { MemberDialog } from './MemberDialog';
 import { formatCount, formatWinRate } from './memberFormat';
 import { selectMembers } from './selectors';
+import '../../styles/tables.css';
+import '../finance/finance.css';
 import './members.css';
 
 function initials(name: string): string {
@@ -16,7 +18,7 @@ function initials(name: string): string {
 
 export function MembersPage({ data }: PageProps) {
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{ name: string; opener: HTMLElement } | null>(null);
   const rows = selectMembers(data.members, query, '');
 
   return (
@@ -62,7 +64,7 @@ export function MembersPage({ data }: PageProps) {
                     type="button"
                     className="member-open"
                     aria-haspopup="dialog"
-                    onClick={() => setSelected(member.name)}
+                    onClick={(event) => setSelected({ name: member.name, opener: event.currentTarget })}
                   >
                     {member.name}
                   </button>
@@ -92,7 +94,12 @@ export function MembersPage({ data }: PageProps) {
       )}
 
       {selected ? (
-        <MemberDialog data={data} name={selected} onClose={() => setSelected(null)} />
+        <MemberDialog
+          data={data}
+          name={selected.name}
+          opener={selected.opener}
+          onClose={() => setSelected(null)}
+        />
       ) : null}
     </div>
   );

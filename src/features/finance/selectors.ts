@@ -31,7 +31,8 @@ function isCalendarDay(value: string): boolean {
   );
 }
 
-function vietnamDayKey(value: string): string | null {
+/** `YYYY-MM-DD` of a Vietnam-time calendar day, or null when the date is unknown. */
+export function vietnamDayKey(value: string): string | null {
   const trimmed = value.trim();
   if (isCalendarDay(trimmed)) return trimmed;
 

@@ -2,15 +2,19 @@ import { useEffect, useRef } from 'react';
 import type { TeamData } from '../../data/schema';
 import { formatVnd } from '../../lib/format';
 import { formatCount, formatWinRate } from './memberFormat';
+import '../../styles/tables.css';
 import './members.css';
 
 export function MemberDialog({
   data,
   name,
+  opener,
   onClose,
 }: {
   data: TeamData;
   name: string;
+  /** Element that opened the dialog; Safari does not focus a clicked button, so activeElement alone is unreliable. */
+  opener?: HTMLElement | null;
   onClose(): void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -20,7 +24,7 @@ export function MemberDialog({
     const dialog = ref.current;
     if (!dialog) return undefined;
     // React detaches the <dialog> before this cleanup runs, so the browser cannot restore focus itself.
-    const opener = document.activeElement;
+    const returnTo = opener ?? document.activeElement;
     if (typeof dialog.showModal === 'function') {
       if (!dialog.open) dialog.showModal();
     } else {
@@ -28,9 +32,9 @@ export function MemberDialog({
     }
     return () => {
       if (typeof dialog.close === 'function' && dialog.open) dialog.close();
-      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
+      if (returnTo instanceof HTMLElement && returnTo.isConnected) returnTo.focus();
     };
-  }, []);
+  }, [opener]);
 
   if (!member) return null;
   const income = data.income.filter((row) => row.member === name);

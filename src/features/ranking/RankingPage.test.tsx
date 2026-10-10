@@ -1,9 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { makeTeamData } from '../../test/fixtures';
+import { useBrowserLikeDialog } from '../members/dialogTestEnv';
 import { RankingPage } from './RankingPage';
 
 describe('RankingPage', () => {
+  useBrowserLikeDialog();
   it('leaves players with zero matches out of the ranking instead of awarding a rank', () => {
     const data = makeTeamData();
     data.ranking = [
@@ -102,5 +104,29 @@ describe('RankingPage', () => {
     render(<RankingPage data={data} />);
     fireEvent.click(screen.getByRole('button', { name: 'An Thử Nghiệm' }));
     expect(screen.getByText('HỒ SƠ THÀNH VIÊN')).toBeInTheDocument();
+  });
+
+  it('returns focus to the opener after Escape or the close button', () => {
+    const data = makeTeamData();
+    data.ranking = [{ ...data.ranking[0], member: 'An Thử Nghiệm', rank: '1', matches: 3 }];
+    render(<RankingPage data={data} />);
+    const opener = screen.getByRole('button', { name: 'An Thử Nghiệm' });
+    // Safari does not focus a button on click, so focus is not set before clicking.
+    fireEvent.click(opener);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+
+    fireEvent.click(opener);
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
+    expect(opener).toHaveFocus();
+  });
+
+  it('shows names without a member profile as plain text', () => {
+    const data = makeTeamData();
+    data.ranking = [{ ...data.ranking[0], member: 'Khách lạ', rank: '1', matches: 3 }];
+    render(<RankingPage data={data} />);
+    expect(screen.getByText('Khách lạ')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Khách lạ' })).toBeNull();
   });
 });

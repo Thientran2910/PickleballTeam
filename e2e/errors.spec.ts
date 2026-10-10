@@ -46,7 +46,7 @@ test('failed refresh keeps old numbers and timestamp and marks stale', async ({ 
   await page.goto('./#overview');
   const readAt = page.locator('.read-at');
   await expect(readAt).toContainText('Cập nhật thành công');
-  const before = await readAt.textContent();
+  const readTime = (await readAt.textContent())!.split(' · ')[1];
   const balance = page.getByText('Quỹ đội hiện có');
   await expect(balance).toBeVisible();
 
@@ -54,7 +54,8 @@ test('failed refresh keeps old numbers and timestamp and marks stale', async ({ 
   await page.getByRole('button', { name: 'Cập nhật' }).click();
   await expect(page.getByRole('alert')).toContainText('Chưa cập nhật được');
   await expect(balance).toBeVisible();
-  await expect(readAt).toHaveText(before!);
+  await expect(readAt).toContainText(readTime);
+  await expect(readAt).not.toContainText('thành công');
 });
 
 test('recovers after retry from first-load error', async ({ page }) => {

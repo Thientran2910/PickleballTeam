@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { DataTable, type Column } from '../../components/DataTable';
 import { EmptyState } from '../../components/EmptyState';
 import type { PageProps, TeamData } from '../../data/schema';
 import { formatDate } from '../../lib/format';
-import { MemberDialog } from '../members/MemberDialog';
+import { useMemberProfile } from '../members/useMemberProfile';
 import '../activities.css';
 import { toMatchView, type MatchView } from './adapters';
 
@@ -22,20 +22,13 @@ function winRateText(value: string | number): string {
   return displayValue(value);
 }
 
-function buildRankingColumns(onOpenMember: (name: string) => void): Column<RankingRow>[] {
+function buildRankingColumns(memberLink: (name: string) => ReactNode): Column<RankingRow>[] {
   return [
     { id: 'rank', header: 'Hạng', render: (row) => displayValue(row.rank) },
     {
       id: 'member',
       header: 'Thành viên',
-      render: (row) =>
-        row.member ? (
-          <button type="button" className="link-button" onClick={() => onOpenMember(row.member)}>
-            {row.member}
-          </button>
-        ) : (
-          '—'
-        ),
+      render: (row) => memberLink(row.member),
     },
     { id: 'matches', header: 'Trận', render: (row) => row.matches },
     { id: 'wins', header: 'Thắng', render: (row) => row.wins },
@@ -86,8 +79,8 @@ function integer(value: number): string {
 
 export function RankingPage({ data }: PageProps) {
   const [query, setQuery] = useState('');
-  const [selectedMember, setSelectedMember] = useState<string | null>(null);
-  const rankingColumns = useMemo(() => buildRankingColumns(setSelectedMember), []);
+  const { memberLink, dialog } = useMemberProfile(data);
+  const rankingColumns = useMemo(() => buildRankingColumns(memberLink), [memberLink]);
 
   const { matches, invalidMatches } = useMemo(() => {
     const readable: MatchView[] = [];
@@ -207,12 +200,7 @@ export function RankingPage({ data }: PageProps) {
         />
       )}
 
-      {selectedMember ? (
-        // members-page scopes the shared dialog table/footnote styles from finance.css.
-        <div className="members-page">
-          <MemberDialog data={data} name={selectedMember} onClose={() => setSelectedMember(null)} />
-        </div>
-      ) : null}
+      {dialog}
     </div>
   );
 }

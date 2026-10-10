@@ -77,6 +77,14 @@ describe('MembersPage', () => {
     expect(card).toHaveFocus();
   });
 
+  it('returns focus to the card even when the click did not focus it (Safari)', () => {
+    render(<MembersPage data={makeTeamData()} />);
+    const card = screen.getByRole('button', { name: /An Thử Nghiệm/ });
+    fireEvent.click(card);
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(card).toHaveFocus();
+  });
+
   it('distinguishes an empty source', () => {
     render(<MembersPage data={makeTeamData({ members: [] })} />);
     expect(screen.getByText('Chưa có dữ liệu')).toBeInTheDocument();

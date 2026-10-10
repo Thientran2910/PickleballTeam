@@ -31,12 +31,6 @@
   margin-bottom: 12px;
 }
 
-.activity-page .footnote {
-  font-size: 11px;
-  color: var(--muted);
-  margin: 15px 0;
-}
-
 /* Filters */
 .activity-page .filters {
   display: flex;
