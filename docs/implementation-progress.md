@@ -22,9 +22,9 @@ No public deploy or source writes authorized in this coding phase.
 | Task | State | Evidence |
 |---|---|---|
 | T1 | merged, verified | 8dfa2b5; 22 tests, typecheck, lint, build passed; worker released |
-| T2 | launching | Claude claude-sonnet-5-5; from verified integration branch |
-| T3 | pending | |
-| T4 | pending; source contract verified | docs/api-source-evidence.md |
+| T2 | merged, verified | 27 tests, typecheck, lint, build passed; worker released; visual check deferred to integration |
+| T3 | launching | Codex gpt-5.6-sol high |
+| T4 | launching; source contract verified | Codex gpt-5.6-sol high; docs/api-source-evidence.md |
 | T5 | pending | |
 
 Run: run_2b6c493a528c; coordinator term_8446dd00-64e5-4b7d-8e96-040520ac1258.
@@ -32,3 +32,5 @@ Run: run_2b6c493a528c; coordinator term_8446dd00-64e5-4b7d-8e96-040520ac1258.
 Contract gate: read Dashboard.gs from linked project via browser; verified sessions/matches/refunds mappings and serialization. Evidence in docs/api-source-evidence.md; T1 notified via Orca.
 
 Integration review: T5 must normalize native fetch TypeError into a Vietnamese network error while preserving caller abort behavior, with a regression test.
+
+T5 review: skip link currently changes hash to an unknown section and may reset active route; verify keyboard skip behavior and fix if confirmed. Shared T2 interfaces match the plan; StatCard additionally accepts primary?: boolean.
