@@ -21,8 +21,8 @@ No public deploy or source writes authorized in this coding phase.
 
 | Task | State | Evidence |
 |---|---|---|
-| T1 | running | task_fcbd3ff46102 / ctx_fc6aad1ea2a1; pb-t1-data; effective gpt-5.6-sol high |
-| T2 | pending | |
+| T1 | merged, verified | 8dfa2b5; 22 tests, typecheck, lint, build passed; worker released |
+| T2 | launching | Claude claude-sonnet-5-5; from verified integration branch |
 | T3 | pending | |
 | T4 | pending; source contract verified | docs/api-source-evidence.md |
 | T5 | pending | |
@@ -30,3 +30,5 @@ No public deploy or source writes authorized in this coding phase.
 Run: run_2b6c493a528c; coordinator term_8446dd00-64e5-4b7d-8e96-040520ac1258.
 
 Contract gate: read Dashboard.gs from linked project via browser; verified sessions/matches/refunds mappings and serialization. Evidence in docs/api-source-evidence.md; T1 notified via Orca.
+
+Integration review: T5 must normalize native fetch TypeError into a Vietnamese network error while preserving caller abort behavior, with a regression test.
