@@ -19,6 +19,8 @@ export function MemberDialog({
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return undefined;
+    // React detaches the <dialog> before this cleanup runs, so the browser cannot restore focus itself.
+    const opener = document.activeElement;
     if (typeof dialog.showModal === 'function') {
       if (!dialog.open) dialog.showModal();
     } else {
@@ -26,6 +28,7 @@ export function MemberDialog({
     }
     return () => {
       if (typeof dialog.close === 'function' && dialog.open) dialog.close();
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
   }, []);
 

@@ -3,6 +3,7 @@ import { makeTeamData } from '../../test/fixtures';
 import {
   listMonths,
   readRefund,
+  searchAdvances,
   searchExpenses,
   searchIncome,
   searchRefunds,
@@ -160,5 +161,19 @@ describe('finance reference-style selectors', () => {
     expect(readRefund({ amount: 'n/a' }).amount).toBeNull();
     expect(readRefund({ amount: null }).amount).toBeNull();
     expect(searchRefunds([{ member: 'Ánh', amount: 1 }], { month: '', query: 'ánh' })).toHaveLength(1);
+  });
+
+  it('does not match the search text against numeric fields', () => {
+    const data = makeTeamData();
+    const income = { ...data.income[0], member: 'Ánh', required: 1_000_000, paid: 1_000_000 };
+    const expense = { ...data.expenses[0], amount: 1_000_000 };
+    expect(searchIncome([income], { period: '', query: '1000000' })).toEqual([]);
+    expect(searchIncome([income], { period: '', query: 'ánh' })).toEqual([income]);
+    expect(searchExpenses([expense], { month: '', query: '1000000' })).toEqual([]);
+    expect(searchExpenses([expense], { month: '', query: 'sân' })).toEqual([expense]);
+    expect(searchRefunds([{ member: 'Ánh', amount: 123456 }], { month: '', query: '123456' })).toEqual([]);
+    expect(
+      searchAdvances([{ ...data.advances[0], advanced: 777_000 }], '777000'),
+    ).toEqual([]);
   });
 });

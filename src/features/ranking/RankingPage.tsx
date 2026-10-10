@@ -175,7 +175,7 @@ export function RankingPage({ data }: PageProps) {
           rows={visibleMatches}
           columns={matchColumns}
           rowKey={(row) =>
-            `${row.date}-${row.team1.join('-')}-${row.team2.join('-')}-${row.sessionId ?? ''}`
+            `${row.date}-${row.team1.join('-')}-${row.team2.join('-')}-${row.sessionId ?? ''}-${row.score1}-${row.score2}`
           }
         />
       ) : (

@@ -4,6 +4,7 @@ import { formatDate, formatVnd } from '../../lib/format';
 import { MemberDialog } from '../members/MemberDialog';
 import {
   listMonths,
+  readRefund,
   searchAdvances,
   searchExpenses,
   searchIncome,
@@ -98,7 +99,12 @@ export function FinancePage({ data }: PageProps) {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
 
   const periods = useMemo(() => unique(data.income.map((row) => row.period)), [data.income]);
-  const months = useMemo(() => listMonths(data.expenses.map((row) => row.date)), [data.expenses]);
+  const expenseMonths = useMemo(() => listMonths(data.expenses.map((row) => row.date)), [data.expenses]);
+  const refundMonths = useMemo(
+    () => listMonths(data.refunds.map((row) => readRefund(row).date)),
+    [data.refunds],
+  );
+  const months = tab === 'refunds' ? refundMonths : expenseMonths;
   // A choice that vanished after a refresh falls back to "all" instead of an empty table.
   const period = periods.includes(periodChoice) ? periodChoice : '';
   const month = months.includes(monthChoice) ? monthChoice : '';
@@ -110,13 +116,17 @@ export function FinancePage({ data }: PageProps) {
     setMonthChoice('');
   };
 
+  const knownMembers = useMemo(() => new Set(data.members.map((row) => row.name)), [data.members]);
+  // Only names that have a profile become buttons; anything else would open nothing.
   const memberLink = (name: string) =>
-    name ? (
+    !name ? (
+      '—'
+    ) : !knownMembers.has(name) ? (
+      name
+    ) : (
       <button type="button" className="link-button" onClick={() => setSelectedMember(name)}>
         {name}
       </button>
-    ) : (
-      '—'
     );
 
   let heads: string[];
