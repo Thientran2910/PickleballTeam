@@ -10,18 +10,22 @@ export type AppShellProps = {
 };
 
 const readAtFormatter = new Intl.DateTimeFormat('vi-VN', {
-  dateStyle: 'short',
-  timeStyle: 'short',
+  hour: 'numeric',
+  minute: 'numeric',
+  second: 'numeric',
+  day: 'numeric',
+  month: 'numeric',
+  year: 'numeric',
   timeZone: 'Asia/Ho_Chi_Minh',
 });
 
 export function AppShell({ children, section, state, onRefresh }: AppShellProps) {
   const busy = state.status === 'loading' || state.status === 'refreshing';
-  const label = busy
-    ? 'Đang cập nhật…'
-    : state.status === 'error'
-      ? 'Thử lại'
-      : 'Cập nhật';
+  const statusText = busy
+    ? 'Đang đọc dữ liệu mới nhất từ Sheet…'
+    : state.readAt
+      ? `● Cập nhật thành công · ${readAtFormatter.format(state.readAt)} · Giờ Việt Nam`
+      : 'Chưa có dữ liệu';
 
   return (
     <>
@@ -40,11 +44,11 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
         <div className="header-inner">
           <a className="brand" href="#overview" aria-label="Pickleball Hà Nội, về trang tổng quan">
             <span className="mark" aria-hidden="true">
-              P
+              p·
             </span>
             <span>
-              Pickleball Hà Nội
-              <small>QUỸ VÀ HOẠT ĐỘNG CỦA ĐỘI</small>
+              pickleball
+              <small>HÀ NỘI · TEAM ATLAS</small>
             </span>
           </a>
           <nav className="site-nav" aria-label="Điều hướng chính">
@@ -66,23 +70,20 @@ export function AppShell({ children, section, state, onRefresh }: AppShellProps)
             disabled={busy}
             aria-busy={busy}
           >
-            {label}
+            ↻ Cập nhật
           </button>
         </div>
       </header>
       <main id="main-content" className="main" tabIndex={-1}>
         <p className="read-at" aria-live="polite">
-          {state.readAt
-            ? `Đọc lúc ${readAtFormatter.format(state.readAt)}`
-            : 'Chưa có dữ liệu'}
+          {statusText}
         </p>
         {children}
       </main>
       <footer className="site-footer">
         <span>Pickleball Hà Nội</span>
-        <span>
-          Dữ liệu đọc từ Google Sheet của đội, chỉ xem. Nhập và sửa trên Sheet.
-        </span>
+        <span>Cùng chơi. Cùng tiến bộ.</span>
+        <span>Thống kê chỉ đọc · Google Sheet là nguồn dữ liệu</span>
       </footer>
     </>
   );

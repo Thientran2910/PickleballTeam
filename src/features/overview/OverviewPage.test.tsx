@@ -1,10 +1,10 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { formatVnd } from '../../lib/format';
 import { makeTeamData } from '../../test/fixtures';
 import { OverviewPage } from './OverviewPage';
 
-/** Value shown next to a label, in either the hero card or the stat strip. */
+/** Value shown in the stat strip or hero card next to a label. */
 function valueOf(label: string): string {
   const container = screen
     .getAllByText(label)
@@ -18,23 +18,24 @@ describe('OverviewPage', () => {
   it('renders upstream balance separately from period payments', () => {
     const data = makeTeamData();
     data.overview.balance = 1_200_000;
+    data.overview.periodRequired = 750_000;
     data.overview.periodPaid = 300_000;
     render(<OverviewPage data={data} />);
-    expect(screen.getByText('Số dư quỹ toàn đội')).toBeInTheDocument();
+    expect(screen.getByText('Quỹ đội hiện có')).toBeInTheDocument();
     expect(document.querySelector('.big')?.textContent).toBe(formatVnd(1_200_000));
-    expect(valueOf('Đã đóng')).toBe(formatVnd(300_000));
+    expect(
+      screen.getByText(`${formatVnd(300_000)} / ${formatVnd(750_000)}`),
+    ).toBeInTheDocument();
   });
 
-  it('uses upstream values without recomputing and labels outflow correctly', () => {
+  it('uses upstream values without recomputing', () => {
     const data = makeTeamData();
     render(<OverviewPage data={data} />);
     const o = data.overview;
-    expect(valueOf('Tổng thu')).toBe(formatVnd(o.totalIncome));
-    expect(valueOf('Chi trực tiếp từ quỹ')).toBe(formatVnd(o.totalFundOutflow));
-    expect(valueOf('Đã hoàn ứng')).toBe(formatVnd(o.totalRefunded));
-    expect(valueOf('Chi phí ghi nhận')).toBe(formatVnd(o.totalExpenses));
-    expect(valueOf('Còn thiếu')).toBe(formatVnd(o.periodMissing));
-    expect(valueOf('Thành viên đã đóng đủ')).toBe('1/2');
+    expect(valueOf('Tổng thu quỹ từ khi theo dõi')).toBe(formatVnd(o.totalIncome));
+    expect(valueOf('Tổng tiền đã chi từ quỹ')).toBe(formatVnd(o.totalFundOutflow));
+    expect(valueOf('Đã đóng đủ đợt hiện tại')).toBe('1/2');
+    expect(document.querySelector('.metric')?.textContent).toBe(formatVnd(o.periodMissing));
   });
 
   it('keeps the Tổng quan heading and links contextual destinations', () => {
@@ -42,11 +43,11 @@ describe('OverviewPage', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Tổng quan' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Xem bảng xếp hạng' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Thành tích thi đấu →' })).toHaveAttribute(
       'href',
       '#ranking',
     );
-    for (const link of screen.getAllByRole('link', { name: /Xem (quỹ đội|thu quỹ)/ })) {
+    for (const link of screen.getAllByRole('link', { name: /Xem (quỹ đội|tất cả|thu quỹ)|Chi tiết thu–chi/ })) {
       expect(link).toHaveAttribute('href', '#finance');
     }
   });
@@ -73,7 +74,7 @@ describe('OverviewPage', () => {
     expect(chart.getAttribute('aria-label')).toContain(`09/2026: ${formatVnd(750_000)}`);
     expect(chart.getAttribute('aria-label')).toContain(`10/2026: ${formatVnd(100_000)}`);
     expect(chart.getAttribute('aria-label')).not.toContain(formatVnd(40_000));
-    const categories = screen.getByRole('heading', { name: 'Chi phí theo hạng mục' })
+    const categories = screen.getByRole('heading', { name: 'Quỹ được dùng vào đâu?' })
       .closest('section') as HTMLElement;
     expect(
       within(categories).getByText('Sân').closest('.bar-row')?.textContent,
@@ -90,7 +91,7 @@ describe('OverviewPage', () => {
       { ...base, member: 'Kỳ cũ C', period: 'TEST-2026-09', missing: 300_000, status: 'Thiếu' },
     ];
     render(<OverviewPage data={data} />);
-    const section = screen.getByRole('heading', { name: /Còn thiếu kỳ/ })
+    const section = screen.getByRole('heading', { name: 'Tiến độ đóng quỹ' })
       .closest('section') as HTMLElement;
     expect(within(section).getByText('Thiếu A')).toBeInTheDocument();
     expect(within(section).queryByText('Đủ B')).not.toBeInTheDocument();
@@ -102,5 +103,15 @@ describe('OverviewPage', () => {
     render(<OverviewPage data={data} />);
     expect(screen.queryByRole('img', { name: /Chi phí ghi nhận theo tháng/ })).toBeNull();
     expect(screen.getAllByText('Chưa có khoản chi phí nào.').length).toBe(2);
+  });
+
+  it('opens the member profile from the missing-dues list', () => {
+    const data = makeTeamData();
+    data.income[0].missing = 100_000;
+    render(<OverviewPage data={data} />);
+    fireEvent.click(screen.getByRole('button', { name: 'An Thử Nghiệm' }));
+    expect(screen.getByText('HỒ SƠ THÀNH VIÊN')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng hồ sơ' }));
+    expect(screen.queryByText('HỒ SƠ THÀNH VIÊN')).not.toBeInTheDocument();
   });
 });
