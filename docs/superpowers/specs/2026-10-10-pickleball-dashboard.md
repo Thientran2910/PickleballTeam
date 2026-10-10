@@ -1,6 +1,6 @@
 # Đặc tả website Pickleball Hà Nội
 
-Trạng thái: user đã duyệt đặc tả trong hội thoại ngày 10/10/2026. Chưa triển khai.
+Trạng thái: user đã duyệt đặc tả và cho phép coding ngày 10/10/2026; đang thực hiện theo plan. Tiến độ và bằng chứng mới tại [implementation-progress.md](../../implementation-progress.md).
 
 ## Mục tiêu và các quyết định đã duyệt
 
@@ -78,6 +78,8 @@ Sheet là nơi vận hành dữ liệu, API là giao diện đọc duy nhất c�
 - Website mẫu xem được khung điều hướng và phong cách; trong lần kiểm tra vẫn ở trạng thái tải. Đọc app.js bằng browser bị ERR_BLOCKED_BY_CLIENT, nên chưa lấy được hợp đồng các mảng rỗng từ mã frontend mẫu.
 - Chưa đọc mã Apps Script và chưa kiểm tra endpoint ghi. Website mới chỉ dùng GET; điều này không chứng minh endpoint ghi hiện tại được bảo vệ.
 
+Cập nhật khi coding: đã đọc hợp lệ Dashboard.gs và xác minh khóa lịch/trận/hoàn ứng; xem [api-source-evidence.md](../../api-source-evidence.md). Các nhận xét “chưa đọc” ở trên ghi lại thời điểm khảo sát ban đầu.
+
 ## Hợp đồng dữ liệu chưa thể suy ra từ mảng rỗng
 
 `sessions`, `matches`, `refunds` chưa có mẫu object. Tên cột trên Sheet không phải bằng chứng tên khóa JSON của API. Khi triển khai phải xác minh bằng mã Apps Script hiện có được đọc hợp lệ hoặc bản ghi API thực tế; không tạo dữ liệu trên Sheet thật để thử và không sửa API.
@@ -91,7 +93,7 @@ Nếu không đọc được mã nguồn, yêu cầu user cung cấp phần mã 
 - Không có mật khẩu/token/service-account key trong code, env frontend, artifact hoặc workflow. URL GET public không phải secret.
 - Render nội dung Sheet dưới dạng text; không dùng dangerouslySetInnerHTML. Không tự mở URL chứng từ hoặc ghi log toàn bộ payload.
 - Không chỉnh Google Sheet, Apps Script, quyền Drive, không POST/PUT/PATCH/DELETE tới API.
-- Tạo repo/push/bật Pages/publish thực hiện ở bước triển khai sau khi đã có bản build và kết quả kiểm tra để user xem. Hiện user chỉ yêu cầu lập kế hoạch.
+- Tạo repo/push/bật Pages/publish thực hiện ở bước triển khai sau khi đã có bản build và kết quả kiểm tra để user xem. User đã cho phép coding; bước publish vẫn tách riêng.
 
 ## Tiêu chí nghiệm thu
 
